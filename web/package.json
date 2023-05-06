@@ -1,0 +1,72 @@
+{
+  "name": "web",
+  "version": "0.1.0",
+  "private": true,
+  "homepage": ".",
+  "dependencies": {
+    "@emotion/react": "^11.10.4",
+    "@emotion/styled": "^11.10.4",
+    "@fontsource/inconsolata": "^4.5.10",
+    "@fontsource/jetbrains-mono": "^4.5.12",
+    "@fontsource/roboto": "^4.5.8",
+    "@metamask/jazzicon": "^2.0.0",
+    "@mui/icons-material": "^5.10.3",
+    "@mui/material": "^5.10.4",
+    "@mui/x-data-grid": "^5.17.2",
+    "@safe-global/safe-apps-react-sdk": "^4.6.4",
+    "@safe-global/safe-apps-sdk": "^7.10.1",
+    "@testing-library/jest-dom": "^5.16.5",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^13.5.0",
+    "assert": "npm:assert",
+    "buffer": "^6.0.3",
+    "crypto": "npm:crypto-browserify",
+    "ethereum-blockies-base64": "^1.0.2",
+    "ethers": "^5.7.0",
+    "lodash": "^4.17.21",
+    "moment": "^2.29.4",
+    "moment-timezone": "^0.5.37",
+    "react": "^18.2.0",
+    "react-dnd": "^16.0.1",
+    "react-dnd-html5-backend": "^16.0.1",
+    "react-dom": "^18.2.0",
+    "react-query": "^3.39.2",
+    "react-router-dom": "^6.3.0",
+    "react-scripts": "5.0.1",
+    "recharts": "^2.1.14",
+    "stream": "npm:stream-browserify",
+    "stream-browserify": "^3.0.0",
+    "wagmi": "^0.12.12",
+    "web-vitals": "^2.1.4",
+    "zstddec": "^0.0.2"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "clean": "rm -rf build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "pretty": "npx prettier '**/*.js' --write"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "prettier": "^2.7.1"
+  }
+}
