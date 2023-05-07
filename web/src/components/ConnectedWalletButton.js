@@ -1,13 +1,10 @@
 import { useAccount, useConnect, useDisconnect, useEnsName } from "wagmi";
 import { useState } from "react";
 import {
-  Avatar,
-  Box,
   Button,
   Card,
   CardContent,
   CardHeader,
-  Chip,
   Modal,
   Stack,
   Typography,
@@ -36,24 +33,19 @@ export default function ConnectedWalletButton({
         <Button size={"small"} onClick={() => disconnect()}>
           Disconnect
         </Button>
-        <WalletAvatar walletAddress={address} size={48} />
-        <Stack direction="column" spacing={0.5}>
+        <WalletAvatar walletAddress={address} size={36} />
+        <Stack direction="column" spacing={0.25}>
           <Typography variant="body2">
             {ensName ?? shortenAddress(address)}
           </Typography>
-          <Box>
-            <Chip
-              size="small"
-              avatar={
-                connector?.id === "safe" ? (
-                  <Avatar>
-                    <SafeIcon />
-                  </Avatar>
-                ) : null
-              }
-              label={connector?.name}
-            />
-          </Box>
+          <Stack direction="row" alignItems="center">
+            {connector?.id === "safe" ? (
+              <SafeIcon color="text.secondary" sx={{ width: 16, height: 16 }} />
+            ) : null}
+            <Typography color="text.secondary" variant="caption">
+              {connector?.name}
+            </Typography>
+          </Stack>
         </Stack>
       </Stack>
     );
@@ -77,7 +69,7 @@ export default function ConnectedWalletButton({
         }}
         onClose={() => setShowingOptions(false)}
       >
-        <Card sx={{ width: 300 }}>
+        <Card sx={{ width: "95%", maxWidth: 500 }}>
           <CardHeader title={"Connect Wallet"} />
           <CardContent>
             <Stack direction="column" spacing={2}>

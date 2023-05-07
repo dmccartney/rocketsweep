@@ -50,22 +50,18 @@ function SearchInput({ sx, input, onChange }) {
   );
 }
 
-function WithdrawalableNodes({ address }) {
+function WithdrawalableNodes({ sx, address }) {
   let nodeAddresses = useWithdrawableNodeAddresses(address);
   return (
-    <Grid
-      sx={{ maxWidth: 800, mt: 1 }}
-      container
-      alignSelf="center"
-      justifyContent="center"
-      spacing={3}
-    >
+    <Stack sx={sx} direction="column" alignItems="center" spacing={1}>
       {nodeAddresses.map((nodeAddress) => (
-        <Grid key={"summary-card"} item xs={6}>
-          <MinipoolRewardsSummaryCard nodeAddress={nodeAddress} asLink />
-        </Grid>
+        <MinipoolRewardsSummaryCard
+          sx={{ width: "100%" }}
+          nodeAddress={nodeAddress}
+          asLink
+        />
       ))}
-    </Grid>
+    </Stack>
   );
 }
 
@@ -77,32 +73,54 @@ export default function HomePage() {
     <Layout>
       <Stack sx={{ mt: 2 }} alignItems="center" direction="column">
         {!isConnected && (
-          <Card sx={{ minWidth: 400, maxWidth: 800, mt: 1, mb: 2 }}>
-            <CardContent>
-              <Typography gutterBottom>
-                Connect wallet to view your nodes
-              </Typography>
-              <ConnectedWalletButton fullWidth />
-            </CardContent>
-          </Card>
+          <Grid container alignItems="center" justifyContent="center">
+            <Grid item xs={12} sm={4} align>
+              <Card sx={{ minWidth: 400, maxWidth: 800, mt: 1, mb: 2 }}>
+                <CardContent>
+                  <Typography gutterBottom>
+                    Connect wallet to view your nodes
+                  </Typography>
+                  <ConnectedWalletButton fullWidth />
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
         )}
-        <Card sx={{ minWidth: 400, maxWidth: 800 }}>
-          <CardContent>
-            <Typography gutterBottom>
-              {isConnected
-                ? "Find nodes by address"
-                : "Or find nodes by address"}
-            </Typography>
-            <SearchInput
-              sx={{ width: "100%" }}
-              input={input}
-              onChange={setInput}
-            />
-          </CardContent>
-        </Card>
+        <Grid container alignItems="center" justifyContent="center">
+          <Grid item xs={12} sm={4} align>
+            <Card sx={{ minWidth: 400, maxWidth: 800 }}>
+              <CardContent>
+                <Typography gutterBottom>
+                  {isConnected
+                    ? "Find nodes by address"
+                    : "Or find nodes by address"}
+                </Typography>
+                <SearchInput
+                  sx={{ width: "100%" }}
+                  input={input}
+                  onChange={setInput}
+                />
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
       </Stack>
-      {input && isAddress && <WithdrawalableNodes address={input} />}
-      {!input && isConnected && <WithdrawalableNodes address={address} />}
+      <Grid container alignItems="center" justifyContent="center">
+        <Grid item xs={12} sm={4} sx={{ mt: 3 }}>
+          {input && isAddress && (
+            <WithdrawalableNodes
+              sx={{ minWidth: 400, maxWidth: 800 }}
+              address={input}
+            />
+          )}
+          {!input && isConnected && (
+            <WithdrawalableNodes
+              sx={{ minWidth: 400, maxWidth: 800 }}
+              address={address}
+            />
+          )}
+        </Grid>
+      </Grid>
     </Layout>
   );
 }
