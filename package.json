@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "pretty": "npx prettier '**/*.{sol,js}' --write"
+    "pretty": "npx prettier '**/*.{sol,js,yml}' --write"
   },
   "devDependencies": {
     "prettier": "^2.8.8",
