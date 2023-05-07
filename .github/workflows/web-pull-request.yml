@@ -1,0 +1,29 @@
+on:
+  pull_request:
+    paths:
+      - "web/**"
+      - ".github/**"
+permissions:
+  checks: write
+  contents: read
+  pull-requests: write
+jobs:
+  build_and_deploy_web_preview:
+    if: "${{ github.event.pull_request.head.repo.full_name == github.repository }}"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: npm install
+        working-directory: ./web
+      - run: npm run build
+        working-directory: ./web
+        env:
+          REACT_APP_ALCHEMY_KEY: "${{ secrets.ALCHEMY_KEY }}"
+          REACT_APP_WALLET_CONNECT_PROJECT_ID: "${{ secrets.WALLET_CONNECT_PROJECT_ID }}"
+          REACT_APP_ROCKET_SWEEP_URL: "https://rocketsweep.app"
+          GENERATE_SOURCEMAP: "false"
+      - uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: "${{ secrets.GITHUB_TOKEN }}"
+          firebaseServiceAccount: "${{ secrets.FIREBASE_PROD_SERVICE_ACCOUNT }}"
+          projectId: "${{ secrets.FIREBASE_PROD_PROJECT_ID }}"
