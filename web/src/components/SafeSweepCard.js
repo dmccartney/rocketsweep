@@ -142,8 +142,13 @@ function BatchCard({ batch, upNext, readOnly }) {
     });
   };
   return (
-    <Badge badgeContent={batch.length} color="primary" max={999}>
-      <Card variant="outlined">
+    <Badge
+      sx={{ width: "100%" }}
+      badgeContent={batch.length}
+      color="primary"
+      max={999}
+    >
+      <Card sx={{ width: "100%" }} variant="outlined">
         <CardContent>
           <Typography variant={"h5"}>
             {total.eq(0)
@@ -160,7 +165,7 @@ function BatchCard({ batch, upNext, readOnly }) {
           </Typography>
           <Alert sx={{ mt: 2, mb: 2 }} severity={efficiencySeverity}>
             <AlertTitle>{efficiencyPer.toFixed(2)}% Efficiency</AlertTitle>
-            {efficiencySeverity === "success"
+            {!upNext || efficiencySeverity === "success"
               ? ""
               : "Consider waiting for lower gas prices or a larger balance."}
           </Alert>
@@ -306,7 +311,7 @@ function SafeAlert({ sx, label, safeAddress }) {
         </>
       }
     >
-      Safe Configured: {label} address
+      Safe Configured: {label}
     </Alert>
   );
 }
@@ -355,7 +360,7 @@ function SweepCardContent({ sx, nodeAddress }) {
   return (
     <CardContent sx={sx}>
       {!hasSafeWithdrawalAddress && !hasSafeNodeAddress && (
-        <Alert sx={{ mb: 3, maxWidth: 450 }} severity="warning">
+        <Alert sx={{ mb: 2, maxWidth: 450 }} severity="warning">
           Executing a batch sweep requires the node or its withdrawal address to
           be a{" "}
           <Link href="https://safe.global/" target="_blank">
@@ -365,51 +370,46 @@ function SweepCardContent({ sx, nodeAddress }) {
       )}
       {hasSafeNodeAddress && (
         <SafeAlert
-          sx={{ mb: 3, maxWidth: 450 }}
+          sx={{ mb: 2, maxWidth: 450 }}
           label="Node"
           safeAddress={nodeAddress}
         />
       )}
       {hasSafeWithdrawalAddress && (
         <SafeAlert
-          sx={{ mb: 3, maxWidth: 450 }}
+          sx={{ mb: 2, maxWidth: 450 }}
           label="Withdrawal"
           safeAddress={withdrawalAddress}
         />
       )}
-      <Grid container spacing={2} sx={{ mb: 2 }}>
-        {unupgradedMps.length > 0 && (
-          <>
-            <Grid item xs={1} />
-            <Grid item xs={8}>
-              <Alert
-                severity={"info"}
-                action={
-                  canProposeBatches && (
-                    <Button
-                      size={"small"}
-                      variant={"contained"}
-                      color={"info"}
-                      onClick={() => upgradeAll(unupgradedMps)}
-                    >
-                      Upgrade
-                    </Button>
-                  )
-                }
+      {unupgradedMps.length > 0 && (
+        <Alert
+          sx={{ mb: 2, maxWidth: 450 }}
+          severity={"info"}
+          action={
+            canProposeBatches && (
+              <Button
+                size={"small"}
+                variant={"contained"}
+                color={"info"}
+                onClick={() => upgradeAll(unupgradedMps)}
               >
-                <AlertTitle>
-                  <Chip size="small" label={unupgradedMps.length} /> minipools
-                  need upgrade
-                </AlertTitle>
-                You cannot distribute minipools that have not been upgraded.
-              </Alert>
-            </Grid>
-            <Grid item xs={3} />
-          </>
-        )}
-        <Grid item xs={6}>
+                Upgrade
+              </Button>
+            )
+          }
+        >
+          <AlertTitle>
+            <Chip size="small" label={unupgradedMps.length} /> minipools need
+            upgrade
+          </AlertTitle>
+          You cannot distribute minipools that have not been upgraded.
+        </Alert>
+      )}
+      <Grid container columnSpacing={4} rowSpacing={2} sx={{ mb: 2 }}>
+        <Grid item xs={12} sm={6}>
           <ConfigurationCard
-            sx={{ mt: 3, pr: 6 }}
+            sx={{ pr: 2, pt: 4 }}
             batchSize={batchSize}
             ethThreshold={ethThreshold}
             onBatchSize={setBatchSize}
@@ -417,7 +417,7 @@ function SweepCardContent({ sx, nodeAddress }) {
             minipoolCount={minipools.length}
           />
         </Grid>
-        <Grid item xs={4}>
+        <Grid item xs={12} sm={6} sx={{ pr: 0.5 }}>
           <Tooltip
             title={`The next batch to distribute based on your configured Threshold and Batch Size.`}
             sx={{ cursor: "help" }}
@@ -465,7 +465,6 @@ function SweepCardContent({ sx, nodeAddress }) {
               <Alert severity="info">No minipools found.</Alert>
             ))}
         </Grid>
-        <Grid item xs={2} />
       </Grid>
       {moreBatches.length > 0 && isShowingMore && (
         <>
@@ -478,7 +477,7 @@ function SweepCardContent({ sx, nodeAddress }) {
           </Typography>
           <Grid container spacing={2}>
             {moreBatches.map((batch, i) => (
-              <Grid key={`batch-${i}`} item xs={4}>
+              <Grid key={`batch-${i}`} item xs={12} sm={4} sx={{ pr: 0.5 }}>
                 <BatchCard
                   batch={batch}
                   upNext={false}

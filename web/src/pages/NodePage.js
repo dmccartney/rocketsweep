@@ -29,10 +29,10 @@ export default function NodePage() {
         <CircularProgress />
       ) : (
         <Grid container spacing={3}>
-          <Grid key={"summary-card"} item xs={4}>
+          <Grid key={"summary-card"} item xs={12} lg={4}>
             <MinipoolRewardsSummaryCard nodeAddress={nodeAddress} />
           </Grid>
-          <Grid key={"sweep-table-cards"} item xs={8}>
+          <Grid key={"sweep-table-cards"} item xs={12} lg={8}>
             <SafeSweepCard sx={{ mb: 2 }} nodeAddress={nodeAddress} />
             <MinipoolRewardsTable nodeAddress={nodeAddress} />
           </Grid>

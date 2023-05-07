@@ -69,7 +69,7 @@ export default function Layout({ breadcrumbs = [], children }) {
       }}
     >
       <AppBar component="nav" color="primary">
-        <Toolbar sx={{ pr: 0 }}>
+        <Toolbar>
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
             <Stack direction="row" alignItems="center" spacing={1}>
               <span>Rocket Sweep</span>
