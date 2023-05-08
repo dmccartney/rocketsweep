@@ -2,14 +2,12 @@ import {
   Alert,
   AlertTitle,
   Badge,
-  Box,
   Button,
   Card,
   CardActionArea,
   CardContent,
   CardHeader,
   Chip,
-  FormHelperText,
   Grid,
   Link,
   Slider,
@@ -26,14 +24,14 @@ import {
 import _ from "lodash";
 import { useState } from "react";
 import { ethers } from "ethers";
-import { useAccount, useFeeData } from "wagmi";
+import { useAccount } from "wagmi";
 import SafeAppsSDK from "@safe-global/safe-apps-sdk";
 import {
   BNSortComparator,
   bnSum,
   distributeBalanceEncoded,
   delegateUpgradeEncoded,
-  estimateDistributeBalanceGas,
+  estimateDistributeBatchGas,
   MinipoolStatus,
   rocketscanUrl,
   safeAppUrl,
@@ -44,6 +42,9 @@ import useK from "../hooks/useK";
 import useCouldBeSafeContract from "../hooks/useCouldBeSafeContract";
 import useMinipoolDetails from "../hooks/useMinipoolDetails";
 import SafeIcon from "./SafeIcon";
+import DistributeAmountGasShare from "./DistributeAmountGasShare";
+import DistributeAmountTotal from "./DistributeAmountTotal";
+import DistributeEfficiencyAlert from "./DistributeEfficiencyAlert";
 
 function ConfigurationCard({
   sx,
@@ -95,22 +96,10 @@ function ConfigurationCard({
 }
 
 function BatchCard({ batch, upNext, readOnly }) {
-  let { data: gasData } = useFeeData();
   let [isShowing, setShowing] = useState(false);
   let total = bnSum(batch.map(({ balance }) => balance));
-  const nodeTotal = bnSum(batch.map(({ nodeBalance }) => nodeBalance));
-  const gasPrice = gasData?.gasPrice || ethers.utils.parseUnits("30", "gwei");
-  const gasAmount = estimateDistributeBalanceGas(batch.length);
-  const estGas = gasPrice.mul(gasAmount);
-  const estReceipt = nodeTotal.sub(estGas);
-  const efficiencyPer = estReceipt.isNegative()
-    ? 0
-    : estReceipt
-        .mul(10000)
-        .div(nodeTotal.isZero() ? 1 : nodeTotal)
-        .toNumber() / 100;
-  const efficiencySeverity =
-    efficiencyPer > 99 ? "success" : efficiencyPer > 95 ? "warning" : "error";
+  let nodeTotal = bnSum(batch.map(({ nodeBalance }) => nodeBalance));
+  let gasAmount = estimateDistributeBatchGas(batch.length);
   const submitBatch = async (batch) => {
     let sdk = new SafeAppsSDK();
     let txs = batch.map(({ minipoolAddress }) => ({
@@ -132,73 +121,16 @@ function BatchCard({ batch, upNext, readOnly }) {
     >
       <Card sx={{ width: "100%" }} variant="outlined">
         <CardContent>
-          <Typography variant={"h5"}>
-            {total.eq(0)
-              ? "-.----"
-              : trimValue(ethers.utils.formatUnits(total))}
-            <Typography
-              sx={{ opacity: 0.6, pl: 0.5 }}
-              variant={"h6"}
-              component={"span"}
-              color={"secondary"}
-            >
-              ETH
-            </Typography>
-          </Typography>
-          <Alert sx={{ mt: 2, mb: 2 }} severity={efficiencySeverity}>
-            <AlertTitle>{efficiencyPer.toFixed(2)}% Efficiency</AlertTitle>
-            {!upNext || efficiencySeverity === "success"
-              ? ""
-              : "Consider waiting for lower gas prices or a larger balance."}
-          </Alert>
-          <Grid container>
-            <Grid item xs={6}>
-              <Typography sx={{ mb: 0, lineHeight: 1 }} variant={"subtitle2"}>
-                {total.eq(0)
-                  ? "-.----"
-                  : trimValue(ethers.utils.formatUnits(nodeTotal))}
-                <Typography
-                  sx={{ mb: 0, lineHeight: 1, opacity: 0.6, pl: 0.5 }}
-                  variant={"subtitle2"}
-                  component={"span"}
-                  color={"secondary"}
-                >
-                  ETH
-                </Typography>
-              </Typography>
-              <FormHelperText sx={{ m: 0 }}>your share</FormHelperText>
-            </Grid>
-            <Grid item xs={6} sx={{ textAlign: "right" }}>
-              <Tooltip
-                title={`~${gasAmount.toNumber().toLocaleString()} gas`}
-                sx={{ cursor: "help" }}
-              >
-                <Box>
-                  <Typography
-                    sx={{ mb: 0, lineHeight: 1 }}
-                    variant={"subtitle2"}
-                  >
-                    ({trimValue(ethers.utils.formatUnits(estGas))})
-                    <Typography
-                      sx={{ mb: 0, lineHeight: 1, opacity: 0.6, pl: 0.5 }}
-                      variant={"subtitle2"}
-                      component={"span"}
-                      color={"secondary"}
-                    >
-                      ETH
-                    </Typography>
-                  </Typography>
-                  <FormHelperText sx={{ m: 0, textAlign: "right" }}>
-                    gas @{" "}
-                    {trimValue(ethers.utils.formatUnits(gasPrice, "gwei"), {
-                      maxDecimals: 0,
-                    })}{" "}
-                    gwei
-                  </FormHelperText>
-                </Box>
-              </Tooltip>
-            </Grid>
-          </Grid>
+          <DistributeAmountTotal total={total} />
+          <DistributeEfficiencyAlert
+            gasAmount={gasAmount}
+            nodeTotal={nodeTotal}
+            hideMessage={!upNext}
+          />
+          <DistributeAmountGasShare
+            gasAmount={gasAmount}
+            nodeTotal={nodeTotal}
+          />
           {!readOnly && upNext && (
             <Button
               onClick={() =>
