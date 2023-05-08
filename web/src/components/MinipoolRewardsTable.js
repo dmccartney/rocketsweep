@@ -1,20 +1,27 @@
 import { useState } from "react";
 import { DataGrid } from "@mui/x-data-grid";
+import {
+  Button,
+  Chip,
+  CircularProgress,
+  IconButton,
+  Typography,
+} from "@mui/material";
+import { OpenInNew } from "@mui/icons-material";
+import { ethers } from "ethers";
+import { useAccount, useContractWrite } from "wagmi";
 import useMinipoolDetails from "../hooks/useMinipoolDetails";
-import { Chip, CircularProgress, IconButton, Typography } from "@mui/material";
+import useWithdrawableNodeAddresses from "../hooks/useWithdrawableNodeAddresses";
 import {
   BNSortComparator,
+  distributeBalanceInterface,
   etherscanUrl,
+  MinipoolStatusNameByValue,
   MinipoolStatus,
   rocketscanUrl,
   shortenAddress,
   trimValue,
 } from "../utils";
-import { OpenInNew } from "@mui/icons-material";
-import { ethers } from "ethers";
-import _ from "lodash";
-
-const MinipoolStatusName = _.invert(MinipoolStatus);
 
 const MINIPOOL_COLS = [
   {
@@ -52,7 +59,7 @@ const MINIPOOL_COLS = [
     field: "status",
     headerName: "Status",
     width: 125,
-    valueGetter: ({ value }) => MinipoolStatusName[value],
+    valueGetter: ({ value }) => MinipoolStatusNameByValue[value],
   },
   {
     field: "upgraded",
@@ -64,7 +71,7 @@ const MINIPOOL_COLS = [
   {
     field: "balance",
     headerName: "Total",
-    width: 150,
+    width: 200,
     sortComparator: BNSortComparator,
     valueGetter: ({ value }) =>
       value ? ethers.BigNumber.from(value || "0") : value,
@@ -75,14 +82,21 @@ const MINIPOOL_COLS = [
       if (row.status !== MinipoolStatus.staking) {
         return "---";
       }
+      let hasBalance = ethers.BigNumber.from(value || "0").gt(
+        ethers.constants.Zero
+      );
       return (
         <Typography>
           {trimValue(
             ethers.utils.formatUnits(ethers.BigNumber.from(value || "0"))
           )}
-          {/*<Button sx={{ ml: 2 }} size="small" variant="contained">*/}
-          {/*  Distribute*/}
-          {/*</Button>*/}
+          {hasBalance && (
+            <DistributeButton
+              sx={{ ml: 2 }}
+              nodeAddress={row.nodeAddress}
+              minipoolAddress={row.minipoolAddress}
+            />
+          )}
         </Typography>
       );
     },
@@ -133,6 +147,30 @@ const MINIPOOL_COLS = [
   },
 ];
 
+function DistributeButton({ sx, minipoolAddress, nodeAddress }) {
+  let { address } = useAccount();
+  let nodeAddresses = useWithdrawableNodeAddresses(address);
+  let distribute = useContractWrite({
+    address: minipoolAddress,
+    abi: distributeBalanceInterface,
+    functionName: "distributeBalance",
+    args: [true], // rewardsOnly
+  });
+  if (nodeAddresses.indexOf(nodeAddress) === -1) {
+    return null;
+  }
+  return (
+    <Button
+      sx={{ ml: 2 }}
+      onClick={() => distribute.writeAsync()}
+      size="small"
+      variant="outlined"
+    >
+      Distribute
+    </Button>
+  );
+}
+
 export default function MinipoolRewardsTable({ sx, nodeAddress }) {
   let [pageSize, setPageSize] = useState(10);
   let minipools = useMinipoolDetails(nodeAddress);
@@ -144,21 +182,10 @@ export default function MinipoolRewardsTable({ sx, nodeAddress }) {
       onPageSizeChange={setPageSize}
       pagination
       rowsPerPageOptions={[5, 10, 20, 50, 100]}
-      rows={minipools}
+      rows={minipools.map((mp) => ({ ...mp, nodeAddress }))}
       getRowId={({ minipoolAddress }) => minipoolAddress}
       columns={MINIPOOL_COLS}
       initialState={{
-        // filter: {
-        //   filterModel: {
-        //     items: [
-        //       {
-        //         columnField: "status",
-        //         operatorValue: "equals",
-        //         value: "staking",
-        //       }
-        //     ],
-        //   },
-        // },
         sorting: {
           sortModel: [
             {

@@ -31,6 +31,8 @@ import SafeAppsSDK from "@safe-global/safe-apps-sdk";
 import {
   BNSortComparator,
   bnSum,
+  distributeBalanceEncoded,
+  delegateUpgradeEncoded,
   estimateDistributeBalanceGas,
   MinipoolStatus,
   rocketscanUrl,
@@ -91,26 +93,6 @@ function ConfigurationCard({
     </Grid>
   );
 }
-
-const distributeBalanceEncoded = new ethers.utils.Interface([
-  {
-    type: "function",
-    name: "distributeBalance",
-    inputs: [{ type: "bool", name: "_rewardsOnly" }],
-    outputs: [],
-    stateMutability: "nonpayable",
-  },
-]).encodeFunctionData("distributeBalance", [true]);
-
-const delegateUpgradeEncoded = new ethers.utils.Interface([
-  {
-    type: "function",
-    name: "delegateUpgrade",
-    inputs: [],
-    outputs: [],
-    stateMutability: "nonpayable",
-  },
-]).encodeFunctionData("delegateUpgrade", []);
 
 function BatchCard({ batch, upNext, readOnly }) {
   let { data: gasData } = useFeeData();
