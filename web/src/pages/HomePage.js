@@ -56,6 +56,7 @@ function WithdrawalableNodes({ sx, address }) {
     <Stack sx={sx} direction="column" alignItems="center" spacing={1}>
       {nodeAddresses.map((nodeAddress) => (
         <MinipoolRewardsSummaryCard
+          key={nodeAddress}
           sx={{ width: "100%" }}
           nodeAddress={nodeAddress}
           asLink
@@ -75,9 +76,9 @@ export default function HomePage() {
         {!isConnected && (
           <Grid container alignItems="center" justifyContent="center">
             <Grid item xs={12} sm={4} align>
-              <Card sx={{ minWidth: 400, maxWidth: 800, mt: 1, mb: 2 }}>
+              <Card sx={{ width: "100%", mt: 1, mb: 2 }}>
                 <CardContent>
-                  <Typography gutterBottom>
+                  <Typography variant="subtitle2" gutterBottom>
                     Connect wallet to view your nodes
                   </Typography>
                   <ConnectedWalletButton fullWidth />
@@ -88,9 +89,9 @@ export default function HomePage() {
         )}
         <Grid container alignItems="center" justifyContent="center">
           <Grid item xs={12} sm={4} align>
-            <Card sx={{ minWidth: 400, maxWidth: 800 }}>
+            <Card sx={{ width: "100%" }}>
               <CardContent>
-                <Typography gutterBottom>
+                <Typography variant="subtitle2" gutterBottom>
                   {isConnected
                     ? "Find nodes by address"
                     : "Or find nodes by address"}
@@ -108,16 +109,10 @@ export default function HomePage() {
       <Grid container alignItems="center" justifyContent="center">
         <Grid item xs={12} sm={4} sx={{ mt: 3 }}>
           {input && isAddress && (
-            <WithdrawalableNodes
-              sx={{ minWidth: 400, maxWidth: 800 }}
-              address={input}
-            />
+            <WithdrawalableNodes sx={{ width: "100%" }} address={input} />
           )}
           {!input && isConnected && (
-            <WithdrawalableNodes
-              sx={{ minWidth: 400, maxWidth: 800 }}
-              address={address}
-            />
+            <WithdrawalableNodes sx={{ width: "100%" }} address={address} />
           )}
         </Grid>
       </Grid>

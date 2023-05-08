@@ -5,11 +5,13 @@ import {
   Chip,
   CircularProgress,
   IconButton,
+  Stack,
+  Tooltip,
   Typography,
 } from "@mui/material";
-import { OpenInNew } from "@mui/icons-material";
+import { OpenInNew, Warning } from "@mui/icons-material";
 import { ethers } from "ethers";
-import { useAccount, useContractWrite } from "wagmi";
+import { useAccount, useContractWrite, usePrepareContractWrite } from "wagmi";
 import useMinipoolDetails from "../hooks/useMinipoolDetails";
 import useWithdrawableNodeAddresses from "../hooks/useWithdrawableNodeAddresses";
 import {
@@ -22,6 +24,9 @@ import {
   shortenAddress,
   trimValue,
 } from "../utils";
+import DistributeAmountTotal from "./DistributeAmountTotal";
+import DistributeEfficiencyAlert from "./DistributeEfficiencyAlert";
+import DistributeAmountGasShare from "./DistributeAmountGasShare";
 
 const MINIPOOL_COLS = [
   {
@@ -71,7 +76,7 @@ const MINIPOOL_COLS = [
   {
     field: "balance",
     headerName: "Total",
-    width: 200,
+    width: 220,
     sortComparator: BNSortComparator,
     valueGetter: ({ value }) =>
       value ? ethers.BigNumber.from(value || "0") : value,
@@ -95,6 +100,11 @@ const MINIPOOL_COLS = [
               sx={{ ml: 2 }}
               nodeAddress={row.nodeAddress}
               minipoolAddress={row.minipoolAddress}
+              balance={ethers.BigNumber.from(value || "0")}
+              nodeBalance={ethers.BigNumber.from(row.nodeBalance || "0")}
+              protocolBalance={ethers.BigNumber.from(
+                row.protocolBalance || "0"
+              )}
             />
           )}
         </Typography>
@@ -147,27 +157,62 @@ const MINIPOOL_COLS = [
   },
 ];
 
-function DistributeButton({ sx, minipoolAddress, nodeAddress }) {
+function DistributeButtonTooltip({ gasAmount, nodeTotal, total }) {
+  return (
+    <Stack spacing={1} sx={{ m: 1 }}>
+      <DistributeAmountTotal total={total} />
+      <DistributeEfficiencyAlert gasAmount={gasAmount} nodeTotal={nodeTotal} />
+      <DistributeAmountGasShare gasAmount={gasAmount} nodeTotal={nodeTotal} />
+    </Stack>
+  );
+}
+
+function DistributeButton({
+  sx,
+  balance,
+  nodeBalance,
+  protocolBalance,
+  minipoolAddress,
+  nodeAddress,
+}) {
   let { address } = useAccount();
   let nodeAddresses = useWithdrawableNodeAddresses(address);
-  let distribute = useContractWrite({
+  const prep = usePrepareContractWrite({
     address: minipoolAddress,
     abi: distributeBalanceInterface,
     functionName: "distributeBalance",
     args: [true], // rewardsOnly
   });
+  let distribute = useContractWrite({
+    ...prep.config,
+  });
+  const gasAmount = prep.data?.request?.gasLimit || 104000;
   if (nodeAddresses.indexOf(nodeAddress) === -1) {
     return null;
   }
+  let hasLowBalance = nodeBalance.lt(ethers.utils.parseEther("0.4"));
   return (
-    <Button
-      sx={{ ml: 2 }}
-      onClick={() => distribute.writeAsync()}
-      size="small"
-      variant="outlined"
+    <Tooltip
+      arrow
+      title={
+        <DistributeButtonTooltip
+          gasAmount={gasAmount}
+          nodeTotal={nodeBalance}
+          total={balance}
+        />
+      }
     >
-      Distribute
-    </Button>
+      <Button
+        sx={{ ml: 2 }}
+        onClick={() => distribute.writeAsync()}
+        size="small"
+        variant="outlined"
+        color={hasLowBalance ? "warning" : "secondary"}
+        endIcon={hasLowBalance ? <Warning /> : null}
+      >
+        Distribute
+      </Button>
+    </Tooltip>
   );
 }
 

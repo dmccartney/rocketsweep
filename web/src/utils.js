@@ -114,7 +114,7 @@ export function bnSum(arr) {
 }
 
 // This is derived from gas profiling analysis.
-export function estimateDistributeBalanceGas(batchSize) {
+export function estimateDistributeBatchGas(batchSize) {
   let count = ethers.BigNumber.from(batchSize);
   return ethers.BigNumber.from(21000) // txn init
     .add(count.mul(1000)) // call data
