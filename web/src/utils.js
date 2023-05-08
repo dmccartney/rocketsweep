@@ -1,4 +1,5 @@
 import { ethers } from "ethers";
+import _ from "lodash";
 
 // Trim the input address to be "0x####...####"
 export function shortenAddress(address, charCount = 4) {
@@ -128,3 +129,31 @@ export const MinipoolStatus = {
   withdrawable: 3,
   dissolved: 4,
 };
+
+export const MinipoolStatusNameByValue = _.invert(MinipoolStatus);
+
+export const distributeBalanceInterface = new ethers.utils.Interface([
+  {
+    type: "function",
+    name: "distributeBalance",
+    inputs: [{ type: "bool", name: "_rewardsOnly" }],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+]);
+
+export const distributeBalanceEncoded =
+  distributeBalanceInterface.encodeFunctionData("distributeBalance", [true]);
+
+export const delegateUpgradeInterface = new ethers.utils.Interface([
+  {
+    type: "function",
+    name: "delegateUpgrade",
+    inputs: [],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+]);
+
+export const delegateUpgradeEncoded =
+  delegateUpgradeInterface.encodeFunctionData("delegateUpgrade", []);

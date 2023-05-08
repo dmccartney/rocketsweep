@@ -8,6 +8,7 @@ export default function useWithdrawableNodeAddresses(address) {
       args: [null, address],
       from: 0,
       to: "latest",
+      enabled: !!address,
       cacheTime: Math.Infinity,
       staleTime: Math.Infinity,
     });
