@@ -1,19 +1,25 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DataGrid } from "@mui/x-data-grid";
 import {
+  Box,
   Button,
   Chip,
   CircularProgress,
+  FormHelperText,
   IconButton,
   Stack,
   Tooltip,
-  Typography,
+  useTheme,
 } from "@mui/material";
 import { OpenInNew, Warning } from "@mui/icons-material";
 import { ethers } from "ethers";
-import { useAccount, useContractWrite, usePrepareContractWrite } from "wagmi";
+import {
+  useContract,
+  useContractWrite,
+  usePrepareContractWrite,
+  useWebSocketProvider,
+} from "wagmi";
 import useMinipoolDetails from "../hooks/useMinipoolDetails";
-import useWithdrawableNodeAddresses from "../hooks/useWithdrawableNodeAddresses";
 import {
   BNSortComparator,
   distributeBalanceInterface,
@@ -22,11 +28,12 @@ import {
   MinipoolStatus,
   rocketscanUrl,
   shortenAddress,
-  trimValue,
 } from "../utils";
-import DistributeAmountTotal from "./DistributeAmountTotal";
 import DistributeEfficiencyAlert from "./DistributeEfficiencyAlert";
-import DistributeAmountGasShare from "./DistributeAmountGasShare";
+import GasInfoFooter from "./GasInfoFooter";
+import CurrencyValue from "./CurrencyValue";
+import useCanConnectedAccountWithdraw from "../hooks/useCanConnectedAccountWithdraw";
+import useGasPrice from "../hooks/useGasPrice";
 
 const MINIPOOL_COLS = [
   {
@@ -38,8 +45,8 @@ const MINIPOOL_COLS = [
         <Chip
           sx={{ mr: 1 }}
           size="small"
-          variant="outlined"
-          color="primary"
+          // variant="outlined"
+          // color="inherit"
           clickable
           component="a"
           target="_blank"
@@ -61,139 +68,167 @@ const MINIPOOL_COLS = [
     ),
   },
   {
-    field: "status",
-    headerName: "Status",
-    width: 125,
-    valueGetter: ({ value }) => MinipoolStatusNameByValue[value],
-  },
-  {
-    field: "upgraded",
-    headerName: "Upgraded",
-    width: 125,
-    type: "boolean",
-    valueFormatter: ({ value }) => (value ? "upgraded" : "not upgraded"),
+    field: "distribute",
+    headerName: "",
+    width: 150,
+    sortable: false,
+    renderCell: ({ row }) => {
+      let balance = ethers.BigNumber.from(row.balance || "0");
+      let hasBalance = balance.gt(ethers.constants.Zero);
+      if (!hasBalance || row.status !== MinipoolStatus.staking) {
+        return "";
+      }
+      return (
+        <DistributeButton
+          nodeAddress={row.nodeAddress}
+          minipoolAddress={row.minipoolAddress}
+          balance={balance}
+          nodeBalance={ethers.BigNumber.from(row.nodeBalance || "0")}
+        />
+      );
+    },
   },
   {
     field: "balance",
-    headerName: "Total",
-    width: 220,
+    headerName: "Balance",
+    type: "number",
+    width: 120,
     sortComparator: BNSortComparator,
-    valueGetter: ({ value }) =>
-      value ? ethers.BigNumber.from(value || "0") : value,
+    valueGetter: ({ value, row }) =>
+      ethers.BigNumber.from(
+        row.status !== MinipoolStatus.staking ? "0" : value || "0"
+      ),
     renderCell: ({ value, row }) => {
       if (!value) {
         return <CircularProgress size="1em" />;
       }
-      if (row.status !== MinipoolStatus.staking) {
-        return "---";
-      }
-      let hasBalance = ethers.BigNumber.from(value || "0").gt(
-        ethers.constants.Zero
-      );
-      return (
-        <Typography>
-          {trimValue(
-            ethers.utils.formatUnits(ethers.BigNumber.from(value || "0"))
-          )}
-          {hasBalance && (
-            <DistributeButton
-              sx={{ ml: 2 }}
-              nodeAddress={row.nodeAddress}
-              minipoolAddress={row.minipoolAddress}
-              balance={ethers.BigNumber.from(value || "0")}
-              nodeBalance={ethers.BigNumber.from(row.nodeBalance || "0")}
-              protocolBalance={ethers.BigNumber.from(
-                row.protocolBalance || "0"
-              )}
-            />
-          )}
-        </Typography>
-      );
+      return <CurrencyValue size="small" currency="eth" value={value} />;
     },
   },
   {
     field: "nodeBalance",
     headerName: "Your Share",
-    width: 100,
+    type: "number",
+    width: 120,
     sortComparator: BNSortComparator,
-    valueGetter: ({ value }) =>
-      value ? ethers.BigNumber.from(value || "0") : value,
+    valueGetter: ({ value, row }) =>
+      ethers.BigNumber.from(
+        row.status !== MinipoolStatus.staking ? "0" : value || "0"
+      ),
     renderCell: ({ value, row }) => {
-      if (!row.upgraded) {
-        return "---";
+      if (!row.upgraded || value.isZero()) {
+        return "";
       }
-      if (row.status !== MinipoolStatus.staking) {
-        return "---";
-      }
-      if (!value) {
-        return null;
-      }
-      return trimValue(
-        ethers.utils.formatUnits(ethers.BigNumber.from(value || "0"))
-      );
+      return <CurrencyValue size="small" currency="eth" value={value} />;
     },
   },
   {
     field: "protocolBalance",
     headerName: "rETH Share",
-    width: 100,
+    type: "number",
+    width: 120,
     sortComparator: BNSortComparator,
-    valueGetter: ({ value }) =>
-      value ? ethers.BigNumber.from(value || "0") : value,
+    valueGetter: ({ value, row }) =>
+      ethers.BigNumber.from(
+        row.status !== MinipoolStatus.staking ? "0" : value || "0"
+      ),
     renderCell: ({ value, row }) => {
-      if (!row.upgraded) {
-        return "---";
+      if (!row.upgraded || value.isZero()) {
+        return "";
       }
-      if (row.status !== MinipoolStatus.staking) {
-        return "---";
-      }
-      if (!value) {
-        return null;
-      }
-      return trimValue(
-        ethers.utils.formatUnits(ethers.BigNumber.from(value || "0"))
-      );
+      return <CurrencyValue size="small" currency="eth" value={value} />;
     },
+  },
+  {
+    field: "status",
+    headerName: "Status",
+    width: 195,
+    valueGetter: ({ value, row: { upgraded } }) =>
+      !MinipoolStatusNameByValue[value]
+        ? ""
+        : upgraded
+        ? MinipoolStatusNameByValue[value]
+        : `${MinipoolStatusNameByValue[value] || ""} (unupgraded)`,
   },
 ];
 
-function DistributeButtonTooltip({ gasAmount, nodeTotal, total }) {
+function DistributeButtonTooltip({ gasAmount, nodeTotal }) {
+  const gasPrice = useGasPrice();
+  const estGas = gasPrice.mul(gasAmount);
   return (
-    <Stack spacing={1} sx={{ m: 1 }}>
-      <DistributeAmountTotal total={total} />
+    <Stack direction="column" spacing={1} sx={{ m: 1 }}>
+      <Stack direction="column" spacing={0} sx={{ m: 0, mb: 1 }}>
+        <Stack
+          direction="row"
+          alignItems="baseline"
+          justifyContent="space-between"
+        >
+          <CurrencyValue
+            value={nodeTotal.sub(estGas)}
+            currency="eth"
+            placeholder="0"
+          />
+        </Stack>
+        <FormHelperText sx={{ m: 0 }}>
+          approximate receipts (after gas)
+        </FormHelperText>
+      </Stack>
       <DistributeEfficiencyAlert gasAmount={gasAmount} nodeTotal={nodeTotal} />
-      <DistributeAmountGasShare gasAmount={gasAmount} nodeTotal={nodeTotal} />
+      <GasInfoFooter gasAmount={gasAmount} />
     </Stack>
   );
 }
 
 function DistributeButton({
-  sx,
   balance,
   nodeBalance,
-  protocolBalance,
   minipoolAddress,
   nodeAddress,
 }) {
-  let { address } = useAccount();
-  let nodeAddresses = useWithdrawableNodeAddresses(address);
+  let theme = useTheme();
+  let canWithdraw = useCanConnectedAccountWithdraw(nodeAddress);
+  let hasLowBalance = nodeBalance.lt(ethers.utils.parseEther("0.4"));
+  let hasTooHighBalance = balance.gt(ethers.utils.parseEther("8"));
+  let disabled = !canWithdraw || hasTooHighBalance; // over 8 ETH you cannot skim rewards.
   const prep = usePrepareContractWrite({
     address: minipoolAddress,
     abi: distributeBalanceInterface,
     functionName: "distributeBalance",
     args: [true], // rewardsOnly
+    enabled: !disabled,
   });
+  let [estimateGasAmount, setEstimateGasAmount] = useState(
+    ethers.BigNumber.from(104000)
+  );
+  let provider = useWebSocketProvider();
+  let mp = useContract({
+    address: minipoolAddress,
+    abi: distributeBalanceInterface,
+    signerOrProvider: provider,
+  });
+  useEffect(() => {
+    if (!mp || hasTooHighBalance) {
+      return;
+    }
+    let cancelled = false;
+    mp.estimateGas
+      .distributeBalance(true)
+      .then((estimate) => !cancelled && setEstimateGasAmount(estimate))
+      .catch((err) => !cancelled && console.log("error estimating gas", err));
+    return () => (cancelled = true);
+  }, [mp, hasTooHighBalance]);
+
   let distribute = useContractWrite({
     ...prep.config,
   });
-  const gasAmount = prep.data?.request?.gasLimit || 104000;
-  if (nodeAddresses.indexOf(nodeAddress) === -1) {
-    return null;
-  }
-  let hasLowBalance = nodeBalance.lt(ethers.utils.parseEther("0.4"));
+  const gasAmount = prep.data?.request?.gasLimit || estimateGasAmount;
   return (
     <Tooltip
       arrow
+      slotProps={{
+        tooltip: { sx: { backgroundColor: theme.palette.grey[800] } },
+        arrow: { sx: { color: theme.palette.grey[800] } },
+      }}
       title={
         <DistributeButtonTooltip
           gasAmount={gasAmount}
@@ -202,45 +237,59 @@ function DistributeButton({
         />
       }
     >
-      <Button
-        sx={{ ml: 2 }}
-        onClick={() => distribute.writeAsync()}
-        size="small"
-        variant="outlined"
-        color={hasLowBalance ? "warning" : "secondary"}
-        endIcon={hasLowBalance ? <Warning /> : null}
-      >
-        Distribute
-      </Button>
+      <Box sx={{ cursor: !disabled ? "inherit" : "not-allowed" }}>
+        <Button
+          onClick={() => distribute.writeAsync()}
+          size="small"
+          variant="outlined"
+          color="primary"
+          disabled={disabled}
+          sx={(theme) => ({
+            "&.Mui-disabled": {
+              borderColor: theme.palette.gray.main,
+              color: theme.palette.gray.main,
+            },
+          })}
+          endIcon={hasLowBalance ? <Warning /> : null}
+        >
+          Distribute
+        </Button>
+      </Box>
     </Tooltip>
   );
 }
 
 export default function MinipoolRewardsTable({ sx, nodeAddress }) {
-  let [pageSize, setPageSize] = useState(10);
+  let [pageSize, setPageSize] = useState(5);
   let minipools = useMinipoolDetails(nodeAddress);
+  let columns = MINIPOOL_COLS;
+  let maxWidth = columns.reduce((sum, { width }) => sum + width, 0);
   return (
-    <DataGrid
-      sx={{ ...sx }}
-      autoHeight
-      pageSize={pageSize}
-      onPageSizeChange={setPageSize}
-      pagination
-      rowsPerPageOptions={[5, 10, 20, 50, 100]}
-      rows={minipools.map((mp) => ({ ...mp, nodeAddress }))}
-      getRowId={({ minipoolAddress }) => minipoolAddress}
-      columns={MINIPOOL_COLS}
-      initialState={{
-        sorting: {
-          sortModel: [
-            {
-              field: "balance",
-              sort: "desc",
+    <div style={{ display: "flex", maxWidth }}>
+      <div style={{ flexGrow: 1 }}>
+        <DataGrid
+          sx={{ ...sx }}
+          autoHeight
+          pageSize={pageSize}
+          onPageSizeChange={setPageSize}
+          pagination
+          rowsPerPageOptions={[5, 10, 20, 50, 100]}
+          rows={minipools.map((mp) => ({ ...mp, nodeAddress }))}
+          getRowId={({ minipoolAddress }) => minipoolAddress}
+          columns={columns}
+          initialState={{
+            sorting: {
+              sortModel: [
+                {
+                  field: "balance",
+                  sort: "desc",
+                },
+              ],
             },
-          ],
-        },
-      }}
-      disableSelectionOnClick
-    />
+          }}
+          disableSelectionOnClick
+        />
+      </div>
+    </div>
   );
 }

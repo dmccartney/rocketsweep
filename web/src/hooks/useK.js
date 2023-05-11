@@ -6,8 +6,8 @@ import {
   useContractRead,
   useContractWrite,
   usePrepareContractWrite,
-  useProvider,
   useWaitForTransaction,
+  useWebSocketProvider,
 } from "wagmi";
 
 import contracts from "../contracts";
@@ -78,13 +78,15 @@ function makeWriters(kName, k) {
   const kInterface = new ethers.utils.Interface(k.abi);
   const kAddress = Array.isArray(k.address) ? k.address[0] : k.address;
   return _.chain(kInterface.fragments)
-    .filter((f) => f.type === "function" && f.constant)
+    .filter((f) => f.type === "function" && !f.constant)
     .keyBy("name")
     .mapValues((f, functionName) => (config) => {
       let {
+        data: prepareData,
         config: prepared,
         isError: isPrepareError,
         error: prepareError,
+        status: prepareStatus,
       } = usePrepareContractWrite({
         address: kAddress,
         abi: k.abi,
@@ -100,7 +102,7 @@ function makeWriters(kName, k) {
         functionName,
         ...config,
       });
-      let { data, write } = useContractWrite({
+      let { data, write, writeAsync } = useContractWrite({
         onError: (error) => {
           console.error("error writing", kName, functionName, config, error);
         },
@@ -109,6 +111,7 @@ function makeWriters(kName, k) {
       let hash = data?.hash;
       const { isLoading, isSuccess, isError, error } = useWaitForTransaction({
         hash,
+        enabled: !!hash,
         onError: (error) => {
           console.error(
             "error waiting for transaction",
@@ -121,13 +124,16 @@ function makeWriters(kName, k) {
         },
       });
       return {
+        prepareData,
         isPrepareError,
         prepareError,
+        prepareStatus,
         isError,
         error,
         isSuccess,
         isLoading,
         write,
+        writeAsync,
       };
     })
     .value();
@@ -142,7 +148,7 @@ function makeEventFinders(kName, k) {
     .filter((f) => f.type === "event")
     .keyBy("name")
     .mapValues((event, eventName) => (config) => {
-      let provider = useProvider();
+      let provider = useWebSocketProvider();
       // WARN: this is rule-of-hooks safe only if the address array is static.
       let kInstances = kAddresses.map((kAddress) =>
         useContract({
@@ -204,7 +210,7 @@ export default _.mapValues(contracts, (k, kName) => ({
   Find: makeEventFinders(kName, k),
   Raw: (config) => {
     const kAddress = Array.isArray(k.address) ? k.address[0] : k.address;
-    let provider = useProvider();
+    let provider = useWebSocketProvider();
     return useContract({
       address: kAddress,
       abi: k.abi,

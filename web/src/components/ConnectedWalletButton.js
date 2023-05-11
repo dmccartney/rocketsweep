@@ -29,22 +29,27 @@ export default function ConnectedWalletButton({
       return null;
     }
     return (
-      <Stack direction="row" alignItems="center" spacing={1}>
+      <Stack sx={sx} direction="row" alignItems="center" spacing={1}>
         <Button size={"small"} onClick={() => disconnect()}>
           Disconnect
         </Button>
-        <WalletAvatar walletAddress={address} size={36} />
-        <Stack direction="column" spacing={0.25}>
-          <Typography variant="body2">
-            {ensName ?? shortenAddress(address)}
-          </Typography>
-          <Stack direction="row" alignItems="center">
-            {connector?.id === "safe" ? (
-              <SafeIcon color="text.secondary" sx={{ width: 16, height: 16 }} />
-            ) : null}
-            <Typography color="text.secondary" variant="caption">
-              {connector?.name}
+        <Stack direction="row" alignItems="center" spacing={1}>
+          <WalletAvatar walletAddress={address} size={36} />
+          <Stack direction="column" spacing={0.25}>
+            <Typography variant="body2">
+              {ensName ?? shortenAddress(address)}
             </Typography>
+            <Stack direction="row" alignItems="center">
+              {connector?.id === "safe" ? (
+                <SafeIcon
+                  color="text.secondary"
+                  sx={{ width: 16, height: 16 }}
+                />
+              ) : null}
+              <Typography color="text.secondary" variant="caption">
+                {connector?.name}
+              </Typography>
+            </Stack>
           </Stack>
         </Stack>
       </Stack>
@@ -53,6 +58,7 @@ export default function ConnectedWalletButton({
   return (
     <>
       <Button
+        sx={sx}
         variant="contained"
         onClick={() => setShowingOptions(true)}
         {...props}
