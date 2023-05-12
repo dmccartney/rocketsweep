@@ -2,12 +2,14 @@ import {
   Alert,
   AlertTitle,
   Badge,
+  Box,
   Button,
   Card,
   CardActionArea,
   CardContent,
   CardHeader,
   Chip,
+  FormHelperText,
   Grid,
   Link,
   Slider,
@@ -29,8 +31,8 @@ import SafeAppsSDK from "@safe-global/safe-apps-sdk";
 import {
   BNSortComparator,
   bnSum,
-  distributeBalanceEncoded,
   delegateUpgradeEncoded,
+  distributeBalanceEncoded,
   estimateDistributeBatchGas,
   MinipoolStatus,
   rocketscanUrl,
@@ -42,9 +44,10 @@ import useK from "../hooks/useK";
 import useCouldBeSafeContract from "../hooks/useCouldBeSafeContract";
 import useMinipoolDetails from "../hooks/useMinipoolDetails";
 import SafeIcon from "./SafeIcon";
-import DistributeAmountGasShare from "./DistributeAmountGasShare";
-import DistributeAmountTotal from "./DistributeAmountTotal";
+import GasInfoFooter from "./GasInfoFooter";
 import DistributeEfficiencyAlert from "./DistributeEfficiencyAlert";
+import useGasPrice from "../hooks/useGasPrice";
+import CurrencyValue from "./CurrencyValue";
 
 function ConfigurationCard({
   sx,
@@ -54,16 +57,18 @@ function ConfigurationCard({
   onEthThreshold,
 }) {
   return (
-    <Grid container sx={sx} columnSpacing={2} rowSpacing={6}>
-      <Grid item xs={5} sx={{ textAlign: "right" }}>
+    <Grid container sx={sx} rowSpacing={4} columnSpacing={2}>
+      <Grid item xs={6} sx={{ textAlign: "right" }}>
         <Typography variant={"h6"} color={"text.primary"}>
           Threshold
         </Typography>
         <Typography variant={"caption"} color={"text.secondary"}>
-          Minimum minipool ETH balance to distribute
+          Minimum minipool ETH
+          <br />
+          balance to distribute
         </Typography>
       </Grid>
-      <Grid item xs={7}>
+      <Grid item xs={6}>
         <Slider
           valueLabelDisplay="on"
           value={Number(ethThreshold)}
@@ -73,15 +78,17 @@ function ConfigurationCard({
           max={1.5}
         />
       </Grid>
-      <Grid item xs={5} sx={{ textAlign: "right" }}>
+      <Grid item xs={6} sx={{ textAlign: "right" }}>
         <Typography variant={"h6"} color={"text.primary"}>
           Batch Size
         </Typography>
         <Typography variant={"caption"} color={"text.secondary"}>
-          Maximum minipools to distribute in a batch
+          Maximum minipools to
+          <br />
+          distribute in a batch
         </Typography>
       </Grid>
-      <Grid item xs={7}>
+      <Grid item xs={6}>
         <Slider
           valueLabelDisplay="on"
           value={batchSize}
@@ -97,9 +104,10 @@ function ConfigurationCard({
 
 function BatchCard({ batch, upNext, readOnly }) {
   let [isShowing, setShowing] = useState(false);
-  let total = bnSum(batch.map(({ balance }) => balance));
+  const gasPrice = useGasPrice();
   let nodeTotal = bnSum(batch.map(({ nodeBalance }) => nodeBalance));
   let gasAmount = estimateDistributeBatchGas(batch.length);
+  const estGas = gasPrice.mul(gasAmount);
   const submitBatch = async (batch) => {
     let sdk = new SafeAppsSDK();
     let txs = batch.map(({ minipoolAddress }) => ({
@@ -121,29 +129,46 @@ function BatchCard({ batch, upNext, readOnly }) {
     >
       <Card sx={{ width: "100%" }} variant="outlined">
         <CardContent>
-          <DistributeAmountTotal total={total} />
-          <DistributeEfficiencyAlert
-            gasAmount={gasAmount}
-            nodeTotal={nodeTotal}
-            hideMessage={!upNext}
-          />
-          <DistributeAmountGasShare
-            gasAmount={gasAmount}
-            nodeTotal={nodeTotal}
-          />
-          {!readOnly && upNext && (
-            <Button
-              onClick={() =>
-                submitBatch(batch)
-                  .then((res) => console.log("res", res))
-                  .catch((err) => console.log("err", err))
-              }
-              variant="contained"
-              sx={{ mt: 1, mb: 1 }}
-              fullWidth
-            >
-              {"Preview"}
-            </Button>
+          <Stack direction="column" sx={{ m: 1 }}>
+            <Stack direction="column" spacing={0} sx={{ m: 0, mb: 2 }}>
+              <Stack
+                direction="row"
+                alignItems="baseline"
+                justifyContent="space-between"
+              >
+                <CurrencyValue
+                  value={nodeTotal.sub(estGas)}
+                  currency="eth"
+                  placeholder="0"
+                />
+              </Stack>
+              <FormHelperText sx={{ m: 0 }}>
+                approximate receipts (after gas)
+              </FormHelperText>
+            </Stack>
+            <DistributeEfficiencyAlert
+              gasAmount={gasAmount}
+              nodeTotal={nodeTotal}
+              hideMessage={!upNext}
+            />
+            <GasInfoFooter sx={{ mt: 2 }} gasAmount={gasAmount} />
+          </Stack>
+          {upNext && (
+            <Box sx={readOnly ? { cursor: "not-allowed" } : {}}>
+              <Button
+                onClick={() =>
+                  submitBatch(batch)
+                    .then((res) => console.log("res", res))
+                    .catch((err) => console.log("err", err))
+                }
+                disabled={readOnly}
+                variant="contained"
+                sx={{ mt: 1, mb: 1 }}
+                fullWidth
+              >
+                Execute
+              </Button>
+            </Box>
           )}
           <Button
             sx={{ mt: 1 }}
@@ -203,30 +228,16 @@ function SafeAlert({ sx, label, safeAddress }) {
     return null;
   }
   return (
-    <Alert
-      sx={sx}
-      color={"success"}
-      icon={<SafeIcon fontSize="medium" />}
-      severity={"info"}
-      variant={"outlined"}
-      action={
-        <>
-          <Button
-            size="small"
-            variant="contained"
-            color="inherit"
-            target="_blank"
-            sx={{ whiteSpace: "nowrap" }}
-            endIcon={<OpenInNew />}
-            href={safeAppUrl({ safeAddress })}
-          >
-            Open
-          </Button>
-        </>
-      }
-    >
-      Safe Configured: {label}
-    </Alert>
+    <Card sx={sx} elevation={8} square>
+      <CardActionArea href={safeAppUrl({ safeAddress })} target="_blank">
+        <CardHeader
+          avatar={<SafeIcon color="primary" size={"medium"} />}
+          title={"Open as Safe App"}
+          subheader={`${label} address`}
+          action={<OpenInNew color="primary" sx={{ mt: 1.5, mr: 1.5 }} />}
+        />
+      </CardActionArea>
+    </Card>
   );
 }
 
@@ -273,196 +284,134 @@ function SweepCardContent({ sx, nodeAddress }) {
   let moreBatches = _.tail(batches);
   return (
     <CardContent sx={sx}>
-      {!hasSafeWithdrawalAddress && !hasSafeNodeAddress && (
-        <Alert sx={{ mb: 2, maxWidth: 450 }} severity="warning">
-          Executing a batch sweep requires the node or its withdrawal address to
-          be a{" "}
-          <Link href="https://safe.global/" target="_blank">
-            Safe
-          </Link>
-        </Alert>
-      )}
-      {hasSafeNodeAddress && (
-        <SafeAlert
-          sx={{ mb: 2, maxWidth: 450 }}
-          label="Node"
-          safeAddress={nodeAddress}
-        />
-      )}
-      {hasSafeWithdrawalAddress && (
-        <SafeAlert
-          sx={{ mb: 2, maxWidth: 450 }}
-          label="Withdrawal"
-          safeAddress={withdrawalAddress}
-        />
-      )}
-      {unupgradedMps.length > 0 && (
-        <Alert
-          sx={{ mb: 2, maxWidth: 450 }}
-          severity={"info"}
-          action={
-            canProposeBatches && (
-              <Button
-                size={"small"}
-                variant={"contained"}
-                color={"info"}
-                onClick={() => upgradeAll(unupgradedMps)}
-              >
-                Upgrade
-              </Button>
-            )
-          }
-        >
-          <AlertTitle>
-            <Chip size="small" label={unupgradedMps.length} /> minipools need
-            upgrade
-          </AlertTitle>
-          You cannot distribute minipools that have not been upgraded.
-        </Alert>
-      )}
-      <Grid container columnSpacing={4} rowSpacing={2} sx={{ mb: 2 }}>
-        <Grid item xs={12} sm={6}>
-          <ConfigurationCard
-            sx={{ pr: 2, pt: 4 }}
-            batchSize={batchSize}
-            ethThreshold={ethThreshold}
-            onBatchSize={setBatchSize}
-            onEthThreshold={setEthThreshold}
-            minipoolCount={minipools.length}
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} sx={{ pr: 0.5 }}>
-          <Tooltip
-            title={`The next batch to distribute based on your configured Threshold and Batch Size.`}
-            sx={{ cursor: "help" }}
-          >
-            <Typography variant={"overline"} color={"text.secondary"}>
-              Current Batch <HelpOutline fontSize="inherit" />
-            </Typography>
-          </Tooltip>
-          {currentBatch && (
-            <BatchCard
-              key={"first-batch"}
-              batch={currentBatch}
-              upNext
-              readOnly={!canProposeBatches}
-              nodeAddress={nodeAddress}
-            />
-          )}
-          {currentBatch && moreBatches.length > 0 && (
-            <Button
-              sx={{ mt: 1 }}
-              fullWidth
-              color={"inherit"}
-              onClick={() => setShowingMore(!isShowingMore)}
-              endIcon={isShowingMore ? <ExpandLess /> : <ExpandMore />}
-            >
-              and {moreBatches.length} more{" "}
-              {moreBatches.length > 0 ? "batches" : "batch"}
-            </Button>
-          )}
-          {!currentBatch &&
-            (minipools.length > 0 ? (
-              minipools.length === unupgradedMps.length ? (
-                <Alert severity="info">
-                  <AlertTitle>Upgrade required</AlertTitle>
-                  You cannot distribute minipools that have not been upgraded.
-                </Alert>
-              ) : (
-                <Alert severity="info">
-                  <AlertTitle>Below Threshold</AlertTitle>
-                  You should wait for more to accumulate in your minipools. Or
-                  you can lower the threshold to distribute smaller balances.
-                </Alert>
+      <Stack direction="column" spacing={2}>
+        {!hasSafeWithdrawalAddress && !hasSafeNodeAddress && (
+          <Alert severity="warning">
+            Executing this requires the node or its withdrawal address to be a{" "}
+            <Link href="https://safe.global/" target="_blank">
+              Safe
+            </Link>
+          </Alert>
+        )}
+        {hasSafeNodeAddress && (
+          <SafeAlert label="Node" safeAddress={nodeAddress} />
+        )}
+        {hasSafeWithdrawalAddress && (
+          <SafeAlert label="Withdrawal" safeAddress={withdrawalAddress} />
+        )}
+        {unupgradedMps.length > 0 && (
+          <Alert
+            sx={{ maxWidth: 450 }}
+            severity={"info"}
+            action={
+              canProposeBatches && (
+                <Button
+                  size={"small"}
+                  variant={"contained"}
+                  color={"info"}
+                  onClick={() => upgradeAll(unupgradedMps)}
+                >
+                  Upgrade
+                </Button>
               )
-            ) : (
-              <Alert severity="info">No minipools found.</Alert>
-            ))}
-        </Grid>
-      </Grid>
-      {moreBatches.length > 0 && isShowingMore && (
-        <>
-          <Typography
-            sx={{ mt: 3 }}
-            variant={"overline"}
-            color={"text.secondary"}
+            }
           >
-            Up Next - {moreBatches.length} more batches
-          </Typography>
-          <Grid container spacing={2}>
-            {moreBatches.map((batch, i) => (
-              <Grid key={`batch-${i}`} item xs={12} sm={4} sx={{ pr: 0.5 }}>
-                <BatchCard
-                  batch={batch}
-                  upNext={false}
-                  readOnly={!canProposeBatches}
-                  ethThreshold={ethThreshold}
-                  nodeAddress={nodeAddress}
-                />
-              </Grid>
-            ))}
+            <AlertTitle>
+              <Chip size="small" label={unupgradedMps.length} /> minipools need
+              upgrade
+            </AlertTitle>
+            You cannot distribute minipools that have not been upgraded.
+          </Alert>
+        )}
+        <Grid container>
+          <Grid item xs={12} sm={6} sx={{ pt: 5, pr: 4, pb: 4 }}>
+            <ConfigurationCard
+              batchSize={batchSize}
+              ethThreshold={ethThreshold}
+              onBatchSize={setBatchSize}
+              onEthThreshold={setEthThreshold}
+              minipoolCount={minipools.length}
+            />
           </Grid>
-        </>
-      )}
+          <Grid item xs={12} sm={6} sx={{ pr: 0.5 }}>
+            <Tooltip
+              title={`The next batch to distribute based on your configured Threshold and Batch Size.`}
+              sx={{ cursor: "help" }}
+            >
+              <Typography variant={"overline"} color={"text.secondary"}>
+                Current Batch <HelpOutline fontSize="inherit" />
+              </Typography>
+            </Tooltip>
+            {currentBatch && (
+              <BatchCard
+                key={"first-batch"}
+                batch={currentBatch}
+                upNext
+                readOnly={!canProposeBatches}
+                nodeAddress={nodeAddress}
+              />
+            )}
+            {currentBatch && moreBatches.length > 0 && (
+              <Button
+                sx={{ mt: 1 }}
+                fullWidth
+                color={"inherit"}
+                onClick={() => setShowingMore(!isShowingMore)}
+                endIcon={isShowingMore ? <ExpandLess /> : <ExpandMore />}
+              >
+                and {moreBatches.length} more{" "}
+                {moreBatches.length > 0 ? "batches" : "batch"}
+              </Button>
+            )}
+            {!currentBatch &&
+              (minipools.length > 0 ? (
+                minipools.length === unupgradedMps.length ? (
+                  <Alert severity="info">
+                    <AlertTitle>Upgrade required</AlertTitle>
+                    You cannot distribute minipools that have not been upgraded.
+                  </Alert>
+                ) : (
+                  <Alert severity="info">
+                    <AlertTitle>Below Threshold</AlertTitle>
+                    You should wait for more to accumulate in your minipools. Or
+                    you can lower the threshold to distribute smaller balances.
+                  </Alert>
+                )
+              ) : (
+                <Alert severity="info">No minipools found.</Alert>
+              ))}
+          </Grid>
+        </Grid>
+        {moreBatches.length > 0 && isShowingMore && (
+          <Stack direction="column">
+            <Typography variant={"overline"} color={"text.secondary"}>
+              Up Next - {moreBatches.length} more batches
+            </Typography>
+            <Grid container spacing={2}>
+              {moreBatches.map((batch, i) => (
+                <Grid key={`batch-${i}`} item xs={12} sm={4} sx={{ pr: 0.5 }}>
+                  <BatchCard
+                    batch={batch}
+                    upNext={false}
+                    readOnly={!canProposeBatches}
+                    ethThreshold={ethThreshold}
+                    nodeAddress={nodeAddress}
+                  />
+                </Grid>
+              ))}
+            </Grid>
+          </Stack>
+        )}
+      </Stack>
     </CardContent>
   );
 }
 
 export default function SafeSweepCard({ sx, nodeAddress }) {
-  let { connector } = useAccount();
-  let [isShowing, setShowing] = useState(connector?.id === "safe");
-  let { data: withdrawalAddress } =
-    useK.RocketStorage.Read.getNodeWithdrawalAddress({
-      args: [nodeAddress],
-      enabled: !!nodeAddress,
-    });
-  let hasSafeWithdrawalAddress = useCouldBeSafeContract(withdrawalAddress);
-  let hasSafeNodeAddress = useCouldBeSafeContract(nodeAddress);
-  let hasSafe = hasSafeWithdrawalAddress || hasSafeNodeAddress;
   return (
     <Card sx={sx}>
-      <CardActionArea onClick={() => setShowing(!isShowing)}>
-        <CardHeader
-          title={
-            <>
-              Batch Sweep
-              {!!nodeAddress && (
-                <Chip
-                  variant="outlined"
-                  clickable={false}
-                  sx={{ ml: 1, cursor: "inherit" }}
-                  color={hasSafe ? "success" : "warning"}
-                  size="small"
-                  label={
-                    <Stack direction="row" alignItems="center">
-                      {!hasSafe && (
-                        <Typography sx={{ mr: 1 }} variant="inherit">
-                          No
-                        </Typography>
-                      )}
-                      <SafeIcon fontSize="inherit" />
-                      <Typography variant="inherit">Safe</Typography>
-                      <Typography sx={{ ml: 1 }} variant="inherit">
-                        configured
-                      </Typography>
-                    </Stack>
-                  }
-                />
-              )}
-            </>
-          }
-          subheader="Distribute from multiple minipools in a single transaction."
-          subheaderTypographyProps={{ mt: 1 }}
-          action={
-            isShowing ? (
-              <ExpandLess sx={{ m: 1 }} />
-            ) : (
-              <ExpandMore sx={{ m: 1 }} />
-            )
-          }
-        />
-      </CardActionArea>
-      {isShowing && <SweepCardContent nodeAddress={nodeAddress} />}
+      <CardHeader subheader="Distribute multiple minipools in a single transaction." />
+      <SweepCardContent nodeAddress={nodeAddress} />
     </Card>
   );
 }

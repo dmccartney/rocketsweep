@@ -1,5 +1,5 @@
 import useK from "./useK";
-import { useProvider } from "wagmi";
+import { useWebSocketProvider } from "wagmi";
 import _ from "lodash";
 import { ethers } from "ethers";
 import contracts from "../contracts";
@@ -11,22 +11,21 @@ export default function useMinipoolDetails(nodeAddress) {
     from: 0,
     to: "latest",
   });
-  let provider = useProvider();
+  let provider = useWebSocketProvider();
   let minipoolAddresses = _.uniq(
     (minipools || []).map(({ args: [minipoolAddress] }) => minipoolAddress)
   );
   let mpDelegateInterface = new ethers.utils.Interface(
     contracts.RocketMinipoolDelegate.abi
   );
+  let loadingWindowMs = 15 * 1000;
   let details = useQueries(
     minipoolAddresses.map((minipoolAddress, i) => ({
       queryKey: ["MinipoolDetails", minipoolAddress],
       queryFn: async () => {
-        if (i > 30) {
-          // HACK: When there are lots of minipools (> 30)
-          // HACK: then we spread them across a 10 second window to reduce load.
+        if (i > 50) {
           await new Promise((resolve) =>
-            setTimeout(resolve, Math.random() * 10000)
+            setTimeout(resolve, loadingWindowMs * Math.random())
           );
         }
         const mp = new ethers.Contract(

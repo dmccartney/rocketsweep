@@ -1,16 +1,18 @@
 import {
   AppBar,
   Box,
-  Breadcrumbs,
+  Card,
+  CardActionArea,
+  CardHeader,
   Link,
   Stack,
   Toolbar,
   Tooltip,
   Typography,
 } from "@mui/material";
-import { HelpOutline } from "@mui/icons-material";
 import { Link as RouterLink } from "react-router-dom";
 import ConnectedWalletButton from "./ConnectedWalletButton";
+import { HelpOutline } from "@mui/icons-material";
 
 function FAQ() {
   return (
@@ -26,12 +28,12 @@ function FAQ() {
         >
           Rocket Pool
         </Link>{" "}
-        operators to distribute the accumulated balances from their minipools.
+        operators to view and take rewards.
       </Typography>
       <Typography variant="h6">How does it work?</Typography>
       <Typography variant="body2">
-        It uses on-chain data to list all minipools under control. And then it
-        allows you to initiate distribution of their rewards.
+        It uses on-chain data to prepare reward info. And then it allows you to
+        initiate claims and distributions.
       </Typography>
       <Typography variant="h6">Who made this?</Typography>
       <Typography variant="body2">
@@ -61,24 +63,28 @@ function FAQ() {
   );
 }
 
-export default function Layout({ breadcrumbs = [], children }) {
+export default function Layout({ children }) {
   return (
     <Box
       sx={{
         display: "flex",
       }}
     >
-      <AppBar component="nav" color="primary">
-        <Toolbar>
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            <Stack direction="row" alignItems="center" spacing={1}>
-              <span>Rocket Sweep</span>
-              <Tooltip title={<FAQ />} sx={{ cursor: "help" }}>
-                <HelpOutline color="disabled" fontSize="inherit" />
-              </Tooltip>
-            </Stack>
-          </Typography>
-          <ConnectedWalletButton />
+      <AppBar component="nav" color="default">
+        <Toolbar disableGutters>
+          <Tooltip title={<FAQ />}>
+            <Card elevation={2} square>
+              <CardActionArea component={RouterLink} to={`/`}>
+                <CardHeader
+                  title="Rocket Sweep"
+                  action={<HelpOutline sx={{ ml: 1 }} fontSize="inherit" />}
+                  titleTypographyProps={{ whiteSpace: "nowrap" }}
+                />
+              </CardActionArea>
+            </Card>
+          </Tooltip>
+          <Box sx={{ flexGrow: 1 }} />
+          <ConnectedWalletButton sx={{ mr: 2 }} />
         </Toolbar>
       </AppBar>
       <Box
@@ -88,24 +94,7 @@ export default function Layout({ breadcrumbs = [], children }) {
         }}
       >
         <Toolbar />
-        {!breadcrumbs?.length ? null : (
-          <Breadcrumbs sx={{ p: 3 }}>
-            {breadcrumbs.map(({ label, href }, n) => (
-              <Link
-                key={`breadcrumb-${n}`}
-                underline="hover"
-                component={RouterLink}
-                color={
-                  n === breadcrumbs.length - 1 ? "text.primary" : "inherit"
-                }
-                to={href}
-              >
-                {label}
-              </Link>
-            ))}
-          </Breadcrumbs>
-        )}
-        <Stack sx={{ width: "100%", pl: 3, pr: 3 }}>{children}</Stack>
+        <Stack sx={{ width: "100%", pt: 3, pl: 3, pr: 3 }}>{children}</Stack>
       </Box>
     </Box>
   );
