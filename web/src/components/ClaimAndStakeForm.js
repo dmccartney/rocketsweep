@@ -126,7 +126,6 @@ export default function ClaimAndStakeForm({
   sliderProps = {},
   helperProps = {},
 }) {
-  let theme = useTheme();
   let totalRpl = bnSum(amountsRpl);
   let [stakeAmountRpl, setStakeAmountRpl] = useState(totalRpl);
   // If we get an updated `totalRpl` later, we want to use it as the default.
@@ -162,10 +161,6 @@ export default function ClaimAndStakeForm({
     <Tooltip
       arrow
       position="bottom"
-      slotProps={{
-        tooltip: { sx: { backgroundColor: theme.palette.grey[800] } },
-        arrow: { sx: { color: theme.palette.grey[800] } },
-      }}
       title={
         <ClaimButtonTooltip
           gasAmount={gasAmount}

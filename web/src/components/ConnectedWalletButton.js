@@ -1,4 +1,4 @@
-import { useAccount, useConnect, useDisconnect, useEnsName } from "wagmi";
+import { useAccount, useConnect, useEnsName } from "wagmi";
 import { useState } from "react";
 import {
   Button,
@@ -19,7 +19,6 @@ export default function ConnectedWalletButton({
   ...props
 }) {
   const { connect, connectors, isLoading, pendingConnector } = useConnect();
-  const { disconnect } = useDisconnect();
   const [showingOptions, setShowingOptions] = useState(false);
 
   const { address, connector, isConnected } = useAccount();
@@ -30,9 +29,6 @@ export default function ConnectedWalletButton({
     }
     return (
       <Stack sx={sx} direction="row" alignItems="center" spacing={1}>
-        <Button size={"small"} onClick={() => disconnect()}>
-          Disconnect
-        </Button>
         <Stack direction="row" alignItems="center" spacing={1}>
           <WalletAvatar walletAddress={address} size={36} />
           <Stack direction="column" spacing={0.25}>

@@ -1,16 +1,15 @@
 import useFetchJSONZST from "./useFetchJSONZST";
-
-const IPFS_BASE = "https://ipfs.io";
-// const IPFS_BASE = "https://cloudflare-ipfs.com";
+import useSetting from "./useSetting";
 
 export default function useFetchRewardSnapshots({
   snapshots,
   network = "mainnet",
 }) {
+  let [ipfsBase] = useSetting("ipfs.base");
   let snapshotJsons = useFetchJSONZST(
     (snapshots || []).map(
       ({ rewardIndex, merkleTreeCID }) =>
-        `${IPFS_BASE}/ipfs/${merkleTreeCID}/rp-rewards-${network}-${rewardIndex}.json.zst`
+        `${ipfsBase}/ipfs/${merkleTreeCID}/rp-rewards-${network}-${rewardIndex}.json.zst`
     )
   );
   return (snapshots || []).map((snapshot, i) => ({
