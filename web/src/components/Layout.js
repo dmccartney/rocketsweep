@@ -1,22 +1,37 @@
 import {
   AppBar,
   Box,
+  Button,
+  ButtonGroup,
   Card,
-  CardActionArea,
+  CardContent,
   CardHeader,
+  Grid,
+  IconButton,
   Link,
+  List,
+  ListItem,
+  ListItemText,
+  Modal,
   Stack,
+  TextField,
   Toolbar,
   Tooltip,
   Typography,
+  useTheme,
 } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 import ConnectedWalletButton from "./ConnectedWalletButton";
-import { HelpOutline } from "@mui/icons-material";
+import { HelpOutline, Settings } from "@mui/icons-material";
+import { useRef, useState } from "react";
+import { useAccount, useDisconnect } from "wagmi";
+import { useThemeMode } from "../theme";
+import useSetting from "../hooks/useSetting";
 
 function FAQ() {
+  let theme = useTheme();
   return (
-    <Stack spacing={1} sx={{ m: 1 }}>
+    <Stack spacing={1} sx={{ m: 1, pb: 1, color: theme.palette.text.primary }}>
       <Typography variant="h6">What is this?</Typography>
       <Typography variant="body2">
         This is a tool for{" "}
@@ -63,6 +78,125 @@ function FAQ() {
   );
 }
 
+function SettingsButton({ sx }) {
+  let [isOpen, setOpen] = useState(false);
+  let { isConnected } = useAccount();
+  let { disconnectAsync } = useDisconnect();
+  let { mode, setMode } = useThemeMode();
+  let [ipfsBase, setIpfsBase, defaultIpfsBase] = useSetting("ipfs.base");
+  let ipfsRef = useRef();
+  return (
+    <>
+      <IconButton onClick={() => setOpen(true)} sx={sx}>
+        <Settings />
+      </IconButton>
+      <Modal
+        open={isOpen}
+        onClose={() => setOpen(false)}
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Card sx={{ width: "95%", maxWidth: 500 }}>
+          <CardHeader title={"Settings"} />
+          <CardContent>
+            <List>
+              {isConnected && (
+                <ListItem>
+                  <ListItemText primary="Wallet" />
+                  <Button
+                    size="small"
+                    onClick={() =>
+                      disconnectAsync()
+                        .then(() => setOpen(false))
+                        .catch((e) => console.log("failure disconnecting", e))
+                    }
+                  >
+                    Disconnect
+                  </Button>
+                </ListItem>
+              )}
+              <ListItem>
+                <ListItemText primary="Theme" />
+                <ButtonGroup>
+                  {["auto", "light", "dark"].map((m) => (
+                    <Button
+                      key={`mode-${m}`}
+                      variant={mode === m ? "contained" : "outlined"}
+                      size="small"
+                      onClick={() => setMode(m)}
+                    >
+                      {m}
+                    </Button>
+                  ))}
+                </ButtonGroup>
+              </ListItem>
+              <ListItem>
+                <ListItemText primary="IPFS Gateway" />
+                <Stack direction="column" alignItems="flex-end">
+                  <ButtonGroup size="small">
+                    <Button
+                      onClick={() => setIpfsBase(defaultIpfsBase)}
+                      variant={
+                        ipfsBase === defaultIpfsBase ? "contained" : "outlined"
+                      }
+                    >
+                      default
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        setIpfsBase("https://");
+                        ipfsRef.current?.focus();
+                      }}
+                      variant={
+                        ipfsBase === defaultIpfsBase ? "outlined" : "contained"
+                      }
+                    >
+                      custom
+                    </Button>
+                  </ButtonGroup>
+                </Stack>
+              </ListItem>
+              <Grid container>
+                <Grid item xs={4} />
+                <Grid item xs={8}>
+                  <TextField
+                    ref={ipfsRef}
+                    disabled={ipfsBase === defaultIpfsBase}
+                    fullWidth
+                    size="small"
+                    onChange={(e) => setIpfsBase(e.target.value)}
+                    value={ipfsBase}
+                  />
+                </Grid>
+              </Grid>
+              <Typography
+                sx={{ ml: 2, mt: 4 }}
+                color="text.secondary"
+                component={"h2"}
+                variant="overline"
+              >
+                TODO
+              </Typography>
+              <ListItem>
+                <ListItemText primary="Ethereum RPC" />
+                <Stack direction="column" alignItems="flex-end">
+                  <ButtonGroup disabled size="small">
+                    <Button variant="contained">Default</Button>
+                    <Button variant="outlined">Custom</Button>
+                  </ButtonGroup>
+                </Stack>
+              </ListItem>
+            </List>
+          </CardContent>
+        </Card>
+      </Modal>
+    </>
+  );
+}
+
 export default function Layout({ children }) {
   return (
     <Box
@@ -72,19 +206,23 @@ export default function Layout({ children }) {
     >
       <AppBar component="nav" color="default">
         <Toolbar disableGutters>
-          <Tooltip title={<FAQ />}>
-            <Card elevation={2} square>
-              <CardActionArea component={RouterLink} to={`/`}>
-                <CardHeader
-                  title="Rocket Sweep"
-                  action={<HelpOutline sx={{ ml: 1 }} fontSize="inherit" />}
-                  titleTypographyProps={{ whiteSpace: "nowrap" }}
-                />
-              </CardActionArea>
-            </Card>
+          <Tooltip arrow title={<FAQ />}>
+            <Typography
+              variant="h6"
+              sx={{
+                pl: 2,
+                color: "inherit",
+                textDecoration: "none",
+              }}
+              component={RouterLink}
+              to={"/"}
+            >
+              Rocket Sweep <HelpOutline sx={{ ml: 1 }} fontSize="inherit" />
+            </Typography>
           </Tooltip>
           <Box sx={{ flexGrow: 1 }} />
-          <ConnectedWalletButton sx={{ mr: 2 }} />
+          <ConnectedWalletButton />
+          <SettingsButton />
         </Toolbar>
       </AppBar>
       <Box

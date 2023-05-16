@@ -9,7 +9,6 @@ import {
   IconButton,
   Stack,
   Tooltip,
-  useTheme,
 } from "@mui/material";
 import { OpenInNew, Warning } from "@mui/icons-material";
 import { ethers } from "ethers";
@@ -185,7 +184,6 @@ function DistributeButton({
   minipoolAddress,
   nodeAddress,
 }) {
-  let theme = useTheme();
   let canWithdraw = useCanConnectedAccountWithdraw(nodeAddress);
   let hasLowBalance = nodeBalance.lt(ethers.utils.parseEther("0.4"));
   let hasTooHighBalance = balance.gt(ethers.utils.parseEther("8"));
@@ -225,10 +223,6 @@ function DistributeButton({
   return (
     <Tooltip
       arrow
-      slotProps={{
-        tooltip: { sx: { backgroundColor: theme.palette.grey[800] } },
-        arrow: { sx: { color: theme.palette.grey[800] } },
-      }}
       title={
         <DistributeButtonTooltip
           gasAmount={gasAmount}

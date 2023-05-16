@@ -5,7 +5,6 @@ import {
   Stack,
   Tooltip,
   Typography,
-  useTheme,
 } from "@mui/material";
 import useGasPrice from "../hooks/useGasPrice";
 import CurrencyValue from "./CurrencyValue";
@@ -15,7 +14,6 @@ export default function DistributeEfficiencyAlert({
   nodeTotal,
   hideMessage,
 }) {
-  const theme = useTheme();
   const gasPrice = useGasPrice();
   const estGas = gasPrice.mul(gasAmount);
   const estReceipt = nodeTotal.sub(estGas);
@@ -30,10 +28,6 @@ export default function DistributeEfficiencyAlert({
   return (
     <Tooltip
       arrow
-      slotProps={{
-        tooltip: { sx: { backgroundColor: theme.palette.grey[900] } },
-        arrow: { sx: { color: theme.palette.grey[900] } },
-      }}
       title={
         <Stack direction="column" alignItems="center" sx={{ p: 1, width: 250 }}>
           <Typography color="text.secondary" variant="caption">

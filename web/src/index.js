@@ -1,5 +1,4 @@
 import CssBaseline from "@mui/material/CssBaseline";
-import { ThemeProvider } from "@mui/material/styles";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "react-query";
@@ -13,7 +12,7 @@ import { InjectedConnector } from "wagmi/connectors/injected";
 import { SafeConnector } from "wagmi/connectors/safe";
 
 import App from "./App";
-import theme from "./theme";
+import { ThemeModeProvider } from "./theme";
 import { WalletConnectConnector } from "wagmi/connectors/walletConnect";
 
 const { chains, provider, webSocketProvider } = configureChains(
@@ -53,12 +52,12 @@ root.render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <WagmiConfig client={wagmiClient}>
-        <ThemeProvider theme={theme}>
+        <ThemeModeProvider>
           <CssBaseline />
           <HashRouter>
             <App />
           </HashRouter>
-        </ThemeProvider>
+        </ThemeModeProvider>
       </WagmiConfig>
       <ReactQueryDevtools position="bottom-right" />
     </QueryClientProvider>
