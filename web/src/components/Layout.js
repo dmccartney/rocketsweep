@@ -1,20 +1,13 @@
 import {
   AppBar,
   Box,
-  Button,
-  ButtonGroup,
   Card,
   CardContent,
   CardHeader,
-  Grid,
   IconButton,
   Link,
-  List,
-  ListItem,
-  ListItemText,
   Modal,
   Stack,
-  TextField,
   Toolbar,
   Tooltip,
   Typography,
@@ -23,10 +16,8 @@ import {
 import { Link as RouterLink } from "react-router-dom";
 import ConnectedWalletButton from "./ConnectedWalletButton";
 import { HelpOutline, Settings } from "@mui/icons-material";
-import { useRef, useState } from "react";
-import { useAccount, useDisconnect } from "wagmi";
-import { useThemeMode } from "../theme";
-import useSetting from "../hooks/useSetting";
+import { useState } from "react";
+import SettingsList from "./SettingsList";
 
 function FAQ() {
   let theme = useTheme();
@@ -80,11 +71,6 @@ function FAQ() {
 
 function SettingsButton({ sx }) {
   let [isOpen, setOpen] = useState(false);
-  let { isConnected } = useAccount();
-  let { disconnectAsync } = useDisconnect();
-  let { mode, setMode } = useThemeMode();
-  let [ipfsBase, setIpfsBase, defaultIpfsBase] = useSetting("ipfs.base");
-  let ipfsRef = useRef();
   return (
     <>
       <IconButton onClick={() => setOpen(true)} sx={sx}>
@@ -102,94 +88,7 @@ function SettingsButton({ sx }) {
         <Card sx={{ width: "95%", maxWidth: 500 }}>
           <CardHeader title={"Settings"} />
           <CardContent>
-            <List>
-              {isConnected && (
-                <ListItem>
-                  <ListItemText primary="Wallet" />
-                  <Button
-                    size="small"
-                    onClick={() =>
-                      disconnectAsync()
-                        .then(() => setOpen(false))
-                        .catch((e) => console.log("failure disconnecting", e))
-                    }
-                  >
-                    Disconnect
-                  </Button>
-                </ListItem>
-              )}
-              <ListItem>
-                <ListItemText primary="Theme" />
-                <ButtonGroup>
-                  {["auto", "light", "dark"].map((m) => (
-                    <Button
-                      key={`mode-${m}`}
-                      variant={mode === m ? "contained" : "outlined"}
-                      size="small"
-                      onClick={() => setMode(m)}
-                    >
-                      {m}
-                    </Button>
-                  ))}
-                </ButtonGroup>
-              </ListItem>
-              <ListItem>
-                <ListItemText primary="IPFS Gateway" />
-                <Stack direction="column" alignItems="flex-end">
-                  <ButtonGroup size="small">
-                    <Button
-                      onClick={() => setIpfsBase(defaultIpfsBase)}
-                      variant={
-                        ipfsBase === defaultIpfsBase ? "contained" : "outlined"
-                      }
-                    >
-                      default
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        setIpfsBase("https://");
-                        ipfsRef.current?.focus();
-                      }}
-                      variant={
-                        ipfsBase === defaultIpfsBase ? "outlined" : "contained"
-                      }
-                    >
-                      custom
-                    </Button>
-                  </ButtonGroup>
-                </Stack>
-              </ListItem>
-              <Grid container>
-                <Grid item xs={4} />
-                <Grid item xs={8}>
-                  <TextField
-                    ref={ipfsRef}
-                    disabled={ipfsBase === defaultIpfsBase}
-                    fullWidth
-                    size="small"
-                    onChange={(e) => setIpfsBase(e.target.value)}
-                    value={ipfsBase}
-                  />
-                </Grid>
-              </Grid>
-              <Typography
-                sx={{ ml: 2, mt: 4 }}
-                color="text.secondary"
-                component={"h2"}
-                variant="overline"
-              >
-                TODO
-              </Typography>
-              <ListItem>
-                <ListItemText primary="Ethereum RPC" />
-                <Stack direction="column" alignItems="flex-end">
-                  <ButtonGroup disabled size="small">
-                    <Button variant="contained">Default</Button>
-                    <Button variant="outlined">Custom</Button>
-                  </ButtonGroup>
-                </Stack>
-              </ListItem>
-            </List>
+            <SettingsList />
           </CardContent>
         </Card>
       </Modal>

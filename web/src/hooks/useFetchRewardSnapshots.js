@@ -10,7 +10,12 @@ export default function useFetchRewardSnapshots({
     (snapshots || []).map(
       ({ rewardIndex, merkleTreeCID }) =>
         `${ipfsBase}/ipfs/${merkleTreeCID}/rp-rewards-${network}-${rewardIndex}.json.zst`
-    )
+    ),
+    {
+      enabled: !!ipfsBase,
+      cacheTime: Math.Infinite,
+      staleTime: Math.Infinite,
+    }
   );
   return (snapshots || []).map((snapshot, i) => ({
     ...snapshot,

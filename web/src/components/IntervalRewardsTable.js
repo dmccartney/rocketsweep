@@ -139,8 +139,12 @@ const INTERVAL_COLS = [
     sortComparator: BNSortComparator,
     valueGetter: ({ value }) => ethers.BigNumber.from(value || 0),
     renderCell: ({ value, row: { type } }) => (
-      <Stack direction="row" spacing={1}>
-        {type === "pending" && <Typography>&ge;</Typography>}
+      <Stack direction="row" spacing={1} alignItems="baseline">
+        {type === "ongoing" && (
+          <Typography component="span" variant="inherit" color="text.secondary">
+            &ge;
+          </Typography>
+        )}
         <CurrencyValue size="small" currency="eth" value={value} />
       </Stack>
     ),
@@ -156,9 +160,13 @@ const INTERVAL_COLS = [
         ethers.BigNumber.from(oracleDaoRpl || "0")
       );
     },
-    renderCell: ({ value, row }) => (
-      <Stack direction="row" spacing={1}>
-        {row.type === "pending" && <Typography>~</Typography>}
+    renderCell: ({ value, row: { type } }) => (
+      <Stack direction="row" spacing={1} alignItems="baseline">
+        {type === "ongoing" && (
+          <Typography component="span" variant="inherit" color="text.secondary">
+            &ge;
+          </Typography>
+        )}
         <CurrencyValue size="small" currency="rpl" value={value} />
       </Stack>
     ),
