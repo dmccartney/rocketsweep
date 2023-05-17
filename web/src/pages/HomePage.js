@@ -14,7 +14,7 @@ import { useState } from "react";
 import { ethers } from "ethers";
 import ConnectedWalletButton from "../components/ConnectedWalletButton";
 import Layout from "../components/Layout";
-import MinipoolRewardsSummaryCard from "../components/MinipoolRewardsSummaryCard";
+import NodeRewardsSummaryCard from "../components/NodeRewardsSummaryCard";
 import useWithdrawableNodeAddresses from "../hooks/useWithdrawableNodeAddresses";
 
 function SearchInput({ sx, input, onChange }) {
@@ -55,7 +55,7 @@ function WithdrawalableNodes({ sx, address }) {
   return (
     <Stack sx={sx} direction="column" alignItems="center" spacing={1}>
       {nodeAddresses.map((nodeAddress) => (
-        <MinipoolRewardsSummaryCard
+        <NodeRewardsSummaryCard
           key={nodeAddress}
           sx={{ width: "100%" }}
           nodeAddress={nodeAddress}

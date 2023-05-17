@@ -10,10 +10,10 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import MinipoolRewardsSummaryCard from "../components/MinipoolRewardsSummaryCard";
+import NodeRewardsSummaryCard from "../components/NodeRewardsSummaryCard";
 import SafeSweepCard from "../components/SafeSweepCard";
-import IntervalRewardsTable from "../components/IntervalRewardsTable";
-import MinipoolRewardsTable from "../components/MinipoolRewardsTable";
+import PeriodicRewardsTable from "../components/PeriodicRewardsTable";
+import ContinuousRewardsTable from "../components/ContinuousRewardsTable";
 import {
   AllInclusive,
   EventRepeat,
@@ -176,14 +176,14 @@ export default function NodePage() {
       ) : (
         <Grid container columnSpacing={3} rowSpacing={5}>
           <Grid key={"summary-card"} item xs={12} lg={4}>
-            <MinipoolRewardsSummaryCard nodeAddress={nodeAddress} />
+            <NodeRewardsSummaryCard nodeAddress={nodeAddress} />
           </Grid>
           <Grid key={"sweep-table-cards"} item xs={12} lg={8}>
             <PeriodicRewardsHeaderCard
               sx={{ mb: 2 }}
               nodeAddress={nodeAddress}
             />
-            <IntervalRewardsTable sx={{ mb: 5 }} nodeAddress={nodeAddress} />
+            <PeriodicRewardsTable sx={{ mb: 5 }} nodeAddress={nodeAddress} />
             <ContinuousRewardsHeaderCard
               sx={{ mb: 2 }}
               nodeAddress={nodeAddress}
@@ -193,7 +193,7 @@ export default function NodePage() {
             {isShowingBatch && (
               <SafeSweepCard sx={{ mb: 2 }} nodeAddress={nodeAddress} />
             )}
-            <MinipoolRewardsTable nodeAddress={nodeAddress} />
+            <ContinuousRewardsTable nodeAddress={nodeAddress} />
           </Grid>
         </Grid>
       )}
