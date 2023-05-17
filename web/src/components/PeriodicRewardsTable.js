@@ -173,7 +173,7 @@ const INTERVAL_COLS = [
   },
 ];
 
-export default function IntervalRewardsTable({ sx, nodeAddress }) {
+export default function PeriodicRewardsTable({ sx, nodeAddress }) {
   let [pageSize, setPageSize] = useState(3);
   let finalized = useNodeFinalizedRewardSnapshots({ nodeAddress });
   let pending = useNodePendingRewardSnapshot({ nodeAddress });

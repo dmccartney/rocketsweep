@@ -206,7 +206,7 @@ function SummaryCardContent({ nodeAddress }) {
   );
 }
 
-export default function MinipoolRewardsSummaryCard({
+export default function NodeRewardsSummaryCard({
   sx,
   nodeAddress,
   action,

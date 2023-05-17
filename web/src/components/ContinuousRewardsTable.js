@@ -253,7 +253,7 @@ function DistributeButton({
   );
 }
 
-export default function MinipoolRewardsTable({ sx, nodeAddress }) {
+export default function ContinuousRewardsTable({ sx, nodeAddress }) {
   let [pageSize, setPageSize] = useState(5);
   let minipools = useMinipoolDetails(nodeAddress);
   let columns = MINIPOOL_COLS;
