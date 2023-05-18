@@ -1,11 +1,11 @@
-import useNextRewardIndex from "./useNextRewardIndex";
+import useOngoingRewardIndex from "./useOngoingRewardIndex";
 import useOngoingRewardSnapshot from "./useOngoingRewardSnapshot";
 import useFinalizedRewardSnapshots from "./useFinalizedRewardSnapshots";
 import _ from "lodash";
 import moment from "moment";
 
 export default function useNodeOngoingRewardSnapshot({ nodeAddress }) {
-  let rewardIndex = useNextRewardIndex();
+  let rewardIndex = useOngoingRewardIndex();
   let data = useOngoingRewardSnapshot({ rewardIndex });
   let finalized = useFinalizedRewardSnapshots({});
   let last = _.maxBy(finalized, "rewardIndex");

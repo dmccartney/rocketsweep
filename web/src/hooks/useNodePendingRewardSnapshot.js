@@ -1,8 +1,8 @@
-import useNextRewardIndex from "./useNextRewardIndex";
+import useOngoingRewardIndex from "./useOngoingRewardIndex";
 import useSubmittedRewardSnapshots from "./useSubmittedRewardSnapshots";
 
 export default function useNodePendingRewardSnapshot({ nodeAddress }) {
-  let rewardIndex = useNextRewardIndex();
+  let rewardIndex = useOngoingRewardIndex();
   let snapshots = useSubmittedRewardSnapshots({ rewardIndex });
   return (
     (snapshots || [])

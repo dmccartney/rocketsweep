@@ -1,4 +1,6 @@
 import {
+  Alert,
+  Box,
   Button,
   Card,
   CardActionArea,
@@ -6,9 +8,11 @@ import {
   CardContent,
   CardHeader,
   Chip,
+  CircularProgress,
   Divider,
   FormHelperText,
   Stack,
+  Typography,
   useTheme,
 } from "@mui/material";
 import { bnSum, MinipoolStatus, rocketscanUrl, trimValue } from "../utils";
@@ -22,7 +26,8 @@ import { AllInclusive, EventRepeat, OpenInNew } from "@mui/icons-material";
 import CurrencyValue from "./CurrencyValue";
 import useNodeFinalizedRewardSnapshots from "../hooks/useNodeFinalizedRewardSnapshots";
 
-function SummaryCardHeader({ nodeAddress, action }) {
+function SummaryCardHeader({ nodeAddress }) {
+  const continuous = useContinuousRewards({ nodeAddress });
   return (
     <CardHeader
       title={
@@ -33,7 +38,14 @@ function SummaryCardHeader({ nodeAddress, action }) {
           walletAddress={nodeAddress}
         />
       }
-      action={action}
+      action={
+        <Stack sx={{ pt: 1, mr: 1 }} direction="column" alignItems="flex-end">
+          <Box sx={{ mt: 0 }}>
+            <Chip size="small" label={continuous?.minipoolCount} />
+          </Box>
+          <FormHelperText sx={{ mt: 0.25 }}>minipools</FormHelperText>
+        </Stack>
+      }
     />
   );
 }
@@ -146,6 +158,8 @@ function usePeriodicRewards({ nodeAddress }) {
 
 function useContinuousRewards({ nodeAddress }) {
   let minipools = useMinipoolDetails(nodeAddress);
+  let minipoolCount = minipools?.length;
+  let isLoadingCount = minipools.filter(({ isLoading }) => isLoading).length;
   minipools = minipools.filter(
     ({ status }) => status === MinipoolStatus.staking
   );
@@ -159,17 +173,20 @@ function useContinuousRewards({ nodeAddress }) {
       .filter(({ upgraded }) => upgraded)
       .map(({ protocolBalance }) => protocolBalance)
   );
-  return { nodeTotal, protocolTotal, minipools };
+  return { nodeTotal, protocolTotal, minipools, minipoolCount, isLoadingCount };
 }
 
 const oneHundred = ethers.utils.parseUnits("100");
-function SummaryCardContent({ nodeAddress }) {
+function SummaryCardContent({ nodeAddress, size = "large" }) {
   const periodic = usePeriodicRewards({ nodeAddress });
   const continuous = useContinuousRewards({ nodeAddress });
   const ethTotal = continuous.nodeTotal?.add(periodic.unclaimedEthTotal);
   const rplTotal = periodic.unclaimedRplTotal;
-  let size =
+  let fontSize =
     ethTotal?.gt(oneHundred) || rplTotal?.gt(oneHundred) ? "medium" : "large";
+  let unupgradedMps = continuous?.minipools?.filter(
+    ({ upgraded }) => upgraded === false
+  );
   return (
     <CardContent sx={{ pt: 1 }}>
       <Stack
@@ -187,21 +204,50 @@ function SummaryCardContent({ nodeAddress }) {
         <CurrencyValue
           value={ethTotal}
           placeholder="0"
-          size={size}
+          size={fontSize}
           currency="eth"
         />
         <CurrencyValue
           value={rplTotal}
           placeholder="0"
-          size={size}
+          size={fontSize}
           currency="rpl"
         />
       </Stack>
-      <FormHelperText disabled dense>
-        Total sweepable rewards
-      </FormHelperText>
-      <PeriodicRewardsCard sx={{ mt: 2, mb: 3 }} {...periodic} />
-      <ContinuousRewardsCard {...continuous} />
+      <Typography variant="caption" color="text.secondary">
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="baseline"
+        >
+          Total sweepable rewards
+          {continuous.isLoadingCount === 0 ? null : (
+            <Stack direction="row" alignItems="baseline">
+              <Typography variant="caption">
+                {Math.floor(
+                  (100 *
+                    (continuous.minipoolCount - continuous.isLoadingCount)) /
+                    (continuous.minipoolCount || 1)
+                )}
+                %
+              </Typography>
+              <CircularProgress color="inherit" size={10} sx={{ ml: 1 }} />
+            </Stack>
+          )}
+        </Stack>
+      </Typography>
+      {unupgradedMps?.length > 0 && (
+        <Alert sx={{ mt: 1 }} icon={false} size="small" severity="warning">
+          <Chip size="small" label={unupgradedMps.length} /> minipools are not
+          upgraded
+        </Alert>
+      )}
+      {size === "small" ? null : (
+        <>
+          <PeriodicRewardsCard sx={{ mt: 2, mb: 3 }} {...periodic} />
+          <ContinuousRewardsCard {...continuous} />
+        </>
+      )}
     </CardContent>
   );
 }
@@ -210,6 +256,7 @@ export default function NodeRewardsSummaryCard({
   sx,
   nodeAddress,
   action,
+  size = "large",
   asLink = false,
 }) {
   let { data: name } = useEnsName({ address: nodeAddress });
@@ -219,7 +266,7 @@ export default function NodeRewardsSummaryCard({
       <Card sx={sx}>
         <CardActionArea component={Link} to={`/node/${nodeAddressOrName}`}>
           <SummaryCardHeader nodeAddress={nodeAddress} />
-          <SummaryCardContent nodeAddress={nodeAddress} />
+          <SummaryCardContent nodeAddress={nodeAddress} size={size} />
         </CardActionArea>
       </Card>
     );
@@ -227,7 +274,7 @@ export default function NodeRewardsSummaryCard({
   return (
     <Card sx={sx}>
       <SummaryCardHeader nodeAddress={nodeAddress} />
-      <SummaryCardContent nodeAddress={nodeAddress} />
+      <SummaryCardContent nodeAddress={nodeAddress} size={size} />
       <CardActions>
         <Stack
           sx={{ width: "100%" }}

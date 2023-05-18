@@ -38,9 +38,11 @@ export default function useMinipoolDetails(nodeAddress) {
           provider.getBalance(minipoolAddress),
           mp.getNodeRefundBalance(),
         ]);
-        let calculatedNodeShare = await mp.calculateNodeShare(
-          balance.sub(nodeRefundBalance)
-        );
+        let balanceLessRefund = balance.sub(nodeRefundBalance);
+        let calculatedNodeShare = ethers.constants.Zero;
+        if (balanceLessRefund.gt(ethers.constants.Zero)) {
+          calculatedNodeShare = await mp.calculateNodeShare(balanceLessRefund);
+        }
         let status = await mp.getStatus();
         let nodeBalance = ethers.BigNumber.from(nodeRefundBalance || "0").add(
           ethers.BigNumber.from(calculatedNodeShare || "0")
@@ -68,7 +70,7 @@ export default function useMinipoolDetails(nodeAddress) {
   return minipoolAddresses.map(
     (minipoolAddress, i) => ({
       minipoolAddress,
-      ...(details[i].data || {}),
+      ...(details[i].data || { isLoading: true }),
     }),
     []
   );

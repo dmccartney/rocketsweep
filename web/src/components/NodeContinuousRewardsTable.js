@@ -81,6 +81,7 @@ const MINIPOOL_COLS = [
         <DistributeButton
           nodeAddress={row.nodeAddress}
           minipoolAddress={row.minipoolAddress}
+          upgraded={row.upgraded}
           balance={balance}
           nodeBalance={ethers.BigNumber.from(row.nodeBalance || "0")}
         />
@@ -183,11 +184,12 @@ function DistributeButton({
   nodeBalance,
   minipoolAddress,
   nodeAddress,
+  upgraded,
 }) {
   let canWithdraw = useCanConnectedAccountWithdraw(nodeAddress);
   let hasLowBalance = nodeBalance.lt(ethers.utils.parseEther("0.4"));
   let hasTooHighBalance = balance.gt(ethers.utils.parseEther("8"));
-  let disabled = !canWithdraw || hasTooHighBalance; // over 8 ETH you cannot skim rewards.
+  let disabled = !upgraded || !canWithdraw || hasTooHighBalance; // over 8 ETH you cannot skim rewards.
   const prep = usePrepareContractWrite({
     address: minipoolAddress,
     abi: distributeBalanceInterface,
@@ -212,7 +214,8 @@ function DistributeButton({
     mp.estimateGas
       .distributeBalance(true)
       .then((estimate) => !cancelled && setEstimateGasAmount(estimate))
-      .catch((err) => !cancelled && console.log("error estimating gas", err));
+      // .catch((err) => !cancelled && console.log("error estimating gas", err));
+      .catch((ignore) => {});
     return () => (cancelled = true);
   }, [mp, hasTooHighBalance]);
 
@@ -253,7 +256,7 @@ function DistributeButton({
   );
 }
 
-export default function ContinuousRewardsTable({ sx, nodeAddress }) {
+export default function NodeContinuousRewardsTable({ sx, nodeAddress }) {
   let [pageSize, setPageSize] = useState(5);
   let minipools = useMinipoolDetails(nodeAddress);
   let columns = MINIPOOL_COLS;
