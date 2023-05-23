@@ -12,8 +12,8 @@ import {
 } from "@mui/material";
 import NodeRewardsSummaryCard from "../components/NodeRewardsSummaryCard";
 import SafeSweepCard from "../components/SafeSweepCard";
-import PeriodicRewardsTable from "../components/PeriodicRewardsTable";
-import ContinuousRewardsTable from "../components/ContinuousRewardsTable";
+import NodePeriodicRewardsTable from "../components/NodePeriodicRewardsTable";
+import NodeContinuousRewardsTable from "../components/NodeContinuousRewardsTable";
 import {
   AllInclusive,
   EventRepeat,
@@ -183,7 +183,10 @@ export default function NodePage() {
               sx={{ mb: 2 }}
               nodeAddress={nodeAddress}
             />
-            <PeriodicRewardsTable sx={{ mb: 5 }} nodeAddress={nodeAddress} />
+            <NodePeriodicRewardsTable
+              sx={{ mb: 5 }}
+              nodeAddress={nodeAddress}
+            />
             <ContinuousRewardsHeaderCard
               sx={{ mb: 2 }}
               nodeAddress={nodeAddress}
@@ -193,7 +196,7 @@ export default function NodePage() {
             {isShowingBatch && (
               <SafeSweepCard sx={{ mb: 2 }} nodeAddress={nodeAddress} />
             )}
-            <ContinuousRewardsTable nodeAddress={nodeAddress} />
+            <NodeContinuousRewardsTable nodeAddress={nodeAddress} />
           </Grid>
         </Grid>
       )}

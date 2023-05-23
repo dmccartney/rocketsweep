@@ -1,103 +1,39 @@
 import { useState } from "react";
 import { DataGrid } from "@mui/x-data-grid";
-import {
-  Button,
-  Chip,
-  Skeleton,
-  Stack,
-  Tooltip,
-  Typography,
-} from "@mui/material";
-import { CheckCircle, HourglassTop } from "@mui/icons-material";
+import { Button, Stack, Typography } from "@mui/material";
+import { Link } from "react-router-dom";
 import { ethers } from "ethers";
 import moment from "moment";
 import { BNSortComparator } from "../utils";
-import ClaimAndStakeForm from "./ClaimAndStakeForm";
 import CurrencyValue from "./CurrencyValue";
-import useCanConnectedAccountWithdraw from "../hooks/useCanConnectedAccountWithdraw";
-import useK from "../hooks/useK";
 import useNodeFinalizedRewardSnapshots from "../hooks/useNodeFinalizedRewardSnapshots";
 import useNodePendingRewardSnapshot from "../hooks/useNodePendingRewardSnapshot";
 import useNodeOngoingRewardSnapshot from "../hooks/useNodeOngoingRewardSnapshot";
-import _ from "lodash";
-
-function ClaimButtonGroup({
-  type,
-  nodeAddress,
-  rewardIndex,
-  totalEth,
-  totalRpl,
-  merkleProof,
-}) {
-  let { data: isClaimed, isLoading } =
-    useK.RocketMerkleDistributorMainnet.Read.isClaimed({
-      args: [rewardIndex, nodeAddress],
-    });
-  let canWithdraw = useCanConnectedAccountWithdraw(nodeAddress);
-  if (isLoading) {
-    return <Skeleton variant="circular" width={20} height={20} />;
-  }
-  if (type !== "finalized") {
-    return (
-      <Button size="small" disabled color="inherit" endIcon={<HourglassTop />}>
-        {_.capitalize(type)}
-      </Button>
-    );
-  }
-  if (isClaimed) {
-    return (
-      <Button size="small" disabled color="inherit" endIcon={<CheckCircle />}>
-        Claimed
-      </Button>
-    );
-  }
-  return (
-    <ClaimAndStakeForm
-      sx={{
-        cursor: canWithdraw ? undefined : "not-allowed",
-      }}
-      buttonProps={{
-        size: "small",
-        label: "Claim",
-        // color: canWithdraw ? "rpl" : "gray",
-      }}
-      sliderProps={{
-        size: "small",
-        color: canWithdraw ? "rpl" : "gray",
-        sx: {
-          width: 144,
-          pb: 0,
-        },
-      }}
-      nodeAddress={nodeAddress}
-      rewardIndexes={[rewardIndex]}
-      amountsEth={[totalEth]}
-      amountsRpl={[totalRpl]}
-      merkleProofs={[merkleProof]}
-    />
-  );
-}
+import ClaimButtonGroup from "./ClaimButtonGroup";
 
 const INTERVAL_COLS = [
   {
     field: "rewardIndex",
     headerName: "Interval",
-    width: 175,
+    width: 150,
     renderCell: ({
       row: { type, rewardIndex, endTime, file, nodeAddressOrName },
     }) => {
       let when = endTime ? moment(1000 * endTime) : null;
       return (
-        <Tooltip arrow title={when?.toLocaleString() || ""}>
-          <Stack direction="row" alignItems="center" spacing={1}>
-            <Typography>#{rewardIndex}</Typography>
-            <Chip
-              size="medium"
-              variant={type === "finalized" ? "contained" : "outlined"}
-              label={`${when?.fromNow() || "ongoing"}`}
-            />
+        <Button
+          component={Link}
+          size="small"
+          variant="inherit"
+          to={`/interval/${rewardIndex}`}
+        >
+          <Stack direction="row" alignItems="baseline">
+            #{rewardIndex}
+            <Typography sx={{ pl: 1 }} variant="caption" color="text.secondary">
+              {`${when?.fromNow() || "ongoing"}`}
+            </Typography>
           </Stack>
-        </Tooltip>
+        </Button>
       );
     },
   },
@@ -119,7 +55,6 @@ const INTERVAL_COLS = [
       return (
         <ClaimButtonGroup
           type={type}
-          isClaimed={value}
           totalEth={ethers.BigNumber.from(smoothingPoolEth || "0")}
           totalRpl={ethers.BigNumber.from(collateralRpl || "0").add(
             ethers.BigNumber.from(oracleDaoRpl || "0")
@@ -145,7 +80,12 @@ const INTERVAL_COLS = [
             &ge;
           </Typography>
         )}
-        <CurrencyValue size="small" currency="eth" value={value} />
+        <CurrencyValue
+          size="small"
+          currency="eth"
+          placeholder="0"
+          value={value}
+        />
       </Stack>
     ),
   },
@@ -173,7 +113,7 @@ const INTERVAL_COLS = [
   },
 ];
 
-export default function PeriodicRewardsTable({ sx, nodeAddress }) {
+export default function NodePeriodicRewardsTable({ sx, nodeAddress }) {
   let [pageSize, setPageSize] = useState(3);
   let finalized = useNodeFinalizedRewardSnapshots({ nodeAddress });
   let pending = useNodePendingRewardSnapshot({ nodeAddress });
