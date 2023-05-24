@@ -122,7 +122,7 @@ const INTERVAL_COLS = [
     field: "totalRpl",
     type: "number",
     headerName: "Inflation",
-    width: 160,
+    width: 175,
     sortComparator: BNSortComparator,
     valueGetter: ({ row }) =>
       ethers.BigNumber.from(row.collateralRpl || 0).add(
@@ -150,6 +150,7 @@ export default function IntervalRewardsTable({
   let snapshot = useRewardSnapshot({ rewardIndex });
   let { isOngoing, nodeRewards } = snapshot || {};
   let nodeAddresses = Object.keys(nodeRewards || {});
+  let maxWidth = INTERVAL_COLS.reduce((sum, { width }) => sum + width, 0);
   let rows = nodeAddresses
     .filter(
       (nodeAddress) =>
@@ -165,27 +166,31 @@ export default function IntervalRewardsTable({
       ...nodeRewards[nodeAddress],
     }));
   return (
-    <DataGrid
-      sx={{ width: "100%", minHeight: 240 }}
-      autoHeight
-      pageSize={pageSize}
-      onPageSizeChange={setPageSize}
-      pagination
-      rowsPerPageOptions={[5, 10, 20, 50, 100]}
-      rows={rows}
-      getRowId={({ nodeAddress }) => nodeAddress}
-      columns={INTERVAL_COLS}
-      initialState={{
-        sorting: {
-          sortModel: [
-            {
-              field: "totalRpl",
-              sort: "desc",
+    <div style={{ display: "flex", maxWidth }}>
+      <div style={{ flexGrow: 1 }}>
+        <DataGrid
+          sx={{ width: "100%", minHeight: 240 }}
+          autoHeight
+          pageSize={pageSize}
+          onPageSizeChange={setPageSize}
+          pagination
+          rowsPerPageOptions={[3, 10, 20, 50, 100]}
+          rows={rows}
+          getRowId={({ nodeAddress }) => nodeAddress}
+          columns={INTERVAL_COLS}
+          initialState={{
+            sorting: {
+              sortModel: [
+                {
+                  field: "totalRpl",
+                  sort: "desc",
+                },
+              ],
             },
-          ],
-        },
-      }}
-      disableSelectionOnClick
-    />
+          }}
+          disableSelectionOnClick
+        />
+      </div>
+    </div>
   );
 }
