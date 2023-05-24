@@ -7,11 +7,11 @@ export default function useRewardSnapshot({ rewardIndex }) {
   let isOngoing = rewardIndex === ongoingRewardIndex;
   let onGoingSnapshot = useOngoingRewardSnapshot({
     rewardIndex,
-    enabled: isOngoing,
+    enabled: isOngoing && !!ongoingRewardIndex,
   });
   let finalizedSnapshot = useFinalizedRewardSnapshot({
     rewardIndex,
-    enabled: !isOngoing,
+    enabled: !isOngoing && !!ongoingRewardIndex,
   });
   let snapshot = finalizedSnapshot?.data || onGoingSnapshot;
   return {

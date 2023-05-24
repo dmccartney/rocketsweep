@@ -26,7 +26,10 @@ export default function IntervalPage() {
     <Layout>
       <Grid container columnSpacing={3} rowSpacing={5}>
         <Grid key={"summary"} item xs={12} lg={4}>
-          <IntervalRewardsSummaryCard rewardIndex={rewardIndex} />
+          <IntervalRewardsSummaryCard
+            sx={{ maxWidth: 600 }}
+            rewardIndex={rewardIndex}
+          />
         </Grid>
         <Grid key={"table"} item xs={12} lg={8}>
           <TextField
