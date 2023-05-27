@@ -3,7 +3,6 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "react-query";
 import { ReactQueryDevtools } from "react-query/devtools";
-import { HashRouter } from "react-router-dom";
 import { WagmiConfig, configureChains, createClient } from "wagmi";
 import { alchemyProvider } from "wagmi/providers/alchemy";
 import { publicProvider } from "wagmi/providers/public";
@@ -54,9 +53,7 @@ root.render(
       <WagmiConfig client={wagmiClient}>
         <ThemeModeProvider>
           <CssBaseline />
-          <HashRouter>
-            <App />
-          </HashRouter>
+          <App />
         </ThemeModeProvider>
       </WagmiConfig>
       <ReactQueryDevtools position="bottom-right" />
