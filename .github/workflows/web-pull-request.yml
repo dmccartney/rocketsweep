@@ -3,6 +3,7 @@ on:
     paths:
       - "web/**"
       - ".github/**"
+      - "firebase.json"
 permissions:
   checks: write
   contents: read
