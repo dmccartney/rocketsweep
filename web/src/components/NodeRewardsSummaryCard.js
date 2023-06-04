@@ -25,9 +25,17 @@ import { Link } from "react-router-dom";
 import { AllInclusive, EventRepeat, OpenInNew } from "@mui/icons-material";
 import CurrencyValue from "./CurrencyValue";
 import useNodeFinalizedRewardSnapshots from "../hooks/useNodeFinalizedRewardSnapshots";
+import useNodeDetails from "../hooks/useNodeDetails";
 
 function SummaryCardHeader({ nodeAddress }) {
   const continuous = useContinuousRewards({ nodeAddress });
+  const { data: details } = useNodeDetails({ nodeAddress });
+  let rplStakeText = "-.---";
+  if (details?.rplStake) {
+    rplStakeText = trimValue(ethers.utils.formatUnits(details?.rplStake), {
+      maxDecimals: 0,
+    });
+  }
   return (
     <CardHeader
       title={
@@ -39,11 +47,41 @@ function SummaryCardHeader({ nodeAddress }) {
         />
       }
       action={
-        <Stack sx={{ pt: 1, mr: 1 }} direction="column" alignItems="flex-end">
-          <Box sx={{ mt: 0 }}>
-            <Chip size="small" label={continuous?.minipoolCount} />
-          </Box>
-          <FormHelperText sx={{ mt: 0.25 }}>minipools</FormHelperText>
+        <Stack sx={{ mr: 1 }} spacing={2} direction="row" alignItems="center">
+          <Stack sx={{ pt: 1 }} direction="column" alignItems="flex-end">
+            <Box sx={{ mt: 0 }}>
+              <Chip
+                size="small"
+                label={
+                  <Typography variant="caption">
+                    {continuous?.minipoolCount}
+                  </Typography>
+                }
+              />
+            </Box>
+            <FormHelperText sx={{ mt: 0.25 }}>minipools</FormHelperText>
+          </Stack>
+          <Stack sx={{ pt: 1 }} direction="column" alignItems="flex-end">
+            <Box sx={{ mt: 0 }}>
+              <Chip
+                size="small"
+                label={
+                  <Typography variant="caption">{rplStakeText}</Typography>
+                }
+              />
+            </Box>
+            <FormHelperText sx={{ mt: 0.25 }}>
+              staked
+              <Typography
+                component={"span"}
+                variant="rpl"
+                sx={{ pl: 0.5 }}
+                color={(theme) => theme.palette.rpl.light}
+              >
+                {"RPL"}
+              </Typography>
+            </FormHelperText>
+          </Stack>
         </Stack>
       }
     />

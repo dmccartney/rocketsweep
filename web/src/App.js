@@ -1,33 +1,25 @@
-import {BrowserRouter, HashRouter, Route, Routes} from "react-router-dom";
+import { BrowserRouter, HashRouter, Route, Routes } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import NodePage from "./pages/NodePage";
 import IntervalPage from "./pages/IntervalPage";
 
-function Router({children}) {
+function Router({ children }) {
   if (process.env.REACT_APP_ROUTER === "hash") {
-    return (
-      <HashRouter>
-        {children}
-      </HashRouter>
-    );
+    return <HashRouter>{children}</HashRouter>;
   }
-  return (
-    <BrowserRouter>
-      {children}
-    </BrowserRouter>
-  );
+  return <BrowserRouter>{children}</BrowserRouter>;
 }
 
 function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" exact element={<HomePage/>}/>
-        <Route path="/node/:nodeAddressOrName" exact element={<NodePage/>}/>
+        <Route path="/" exact element={<HomePage />} />
+        <Route path="/node/:nodeAddressOrName" exact element={<NodePage />} />
         <Route
           path="/interval/:rewardIndexOrOngoing"
           exact
-          element={<IntervalPage/>}
+          element={<IntervalPage />}
         />
       </Routes>
     </Router>
