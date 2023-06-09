@@ -26,7 +26,7 @@ import {
 import _ from "lodash";
 import { useState } from "react";
 import { ethers } from "ethers";
-import { useAccount, useEnsName } from "wagmi";
+import { useAccount } from "wagmi";
 import SafeAppsSDK from "@safe-global/safe-apps-sdk";
 import {
   BNSortComparator,
@@ -222,8 +222,6 @@ function useSortedMinipoolDetails(nodeAddress) {
 }
 
 function SafeAlert({ sx, label, nodeAddress, safeAddress }) {
-  let { data: name } = useEnsName({ address: nodeAddress });
-  let nodeAddressOrName = name || nodeAddress;
   let { connector } = useAccount();
   if (connector?.id === "safe") {
     // No alert when it is already open as a Safe app.
@@ -232,7 +230,7 @@ function SafeAlert({ sx, label, nodeAddress, safeAddress }) {
   return (
     <Card sx={sx} elevation={8} square>
       <CardActionArea
-        href={safeAppUrl({ safeAddress, path: `/node/${nodeAddressOrName}` })}
+        href={safeAppUrl({ safeAddress })}
         target="_blank"
       >
         <CardHeader

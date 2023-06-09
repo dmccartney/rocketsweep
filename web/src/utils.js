@@ -102,9 +102,11 @@ export function rocketscanUrl({ network = "mainnet", node, minipool }) {
 export function safeAppUrl({
   safeAddress,
   appUrl = process.env.REACT_APP_ROCKET_SWEEP_URL,
-  path = "",
 }) {
-  return `https://app.safe.global/apps/open?safe=eth:${safeAddress}&appUrl=${appUrl}${path}`;
+  const url = new URL(`https://app.safe.global/apps/open`)
+  url.searchParams.append('safe', `eth:${safeAddress}`)
+  url.searchParams.append('appUrl', appUrl)
+  return url.toString()
 }
 
 export function bnSum(arr) {
