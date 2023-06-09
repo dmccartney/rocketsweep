@@ -26,7 +26,7 @@ import {
 import _ from "lodash";
 import { useState } from "react";
 import { ethers } from "ethers";
-import { useAccount } from "wagmi";
+import { useAccount, useEnsName } from "wagmi";
 import SafeAppsSDK from "@safe-global/safe-apps-sdk";
 import {
   BNSortComparator,
@@ -221,7 +221,9 @@ function useSortedMinipoolDetails(nodeAddress) {
     .value();
 }
 
-function SafeAlert({ sx, label, safeAddress }) {
+function SafeAlert({ sx, label, nodeAddress, safeAddress }) {
+  let { data: name } = useEnsName({ address: nodeAddress });
+  let nodeAddressOrName = name || nodeAddress;
   let { connector } = useAccount();
   if (connector?.id === "safe") {
     // No alert when it is already open as a Safe app.
@@ -229,7 +231,10 @@ function SafeAlert({ sx, label, safeAddress }) {
   }
   return (
     <Card sx={sx} elevation={8} square>
-      <CardActionArea href={safeAppUrl({ safeAddress })} target="_blank">
+      <CardActionArea
+        href={safeAppUrl({ safeAddress, path: `/node/${nodeAddressOrName}` })}
+        target="_blank"
+      >
         <CardHeader
           avatar={<SafeIcon color="primary" size={"medium"} />}
           title={"Open as Safe App"}
@@ -294,10 +299,18 @@ function SweepCardContent({ sx, nodeAddress }) {
           </Alert>
         )}
         {hasSafeNodeAddress && (
-          <SafeAlert label="Node" safeAddress={nodeAddress} />
+          <SafeAlert
+            label="Node"
+            nodeAddress={nodeAddress}
+            safeAddress={nodeAddress}
+          />
         )}
         {hasSafeWithdrawalAddress && (
-          <SafeAlert label="Withdrawal" safeAddress={withdrawalAddress} />
+          <SafeAlert
+            label="Withdrawal"
+            nodeAddress={nodeAddress}
+            safeAddress={withdrawalAddress}
+          />
         )}
         {unupgradedMps.length > 0 && (
           <Alert
