@@ -30,6 +30,7 @@ export default function CurrencyValue({
   size = (v) => (v.gte(ethers.utils.parseUnits("1000")) ? "small" : "medium"),
   placeholder = "-.---",
   decimalPlaces = 3,
+  hideCurrency = false,
   ...props
 }) {
   let computedSize = size;
@@ -60,16 +61,18 @@ export default function CurrencyValue({
       >
         {valueText}
       </Typography>
-      <Typography
-        component={"span"}
-        variant={typeVariants.currency}
-        color={(theme) =>
-          theme.palette[currency] ? theme.palette[currency].main : "default"
-        }
-      >
-        {" "}
-        {currency.toUpperCase()}
-      </Typography>
+      {hideCurrency ? null : (
+        <Typography
+          component={"span"}
+          variant={typeVariants.currency}
+          color={(theme) =>
+            theme.palette[currency] ? theme.palette[currency].main : "default"
+          }
+        >
+          {" "}
+          {currency.toUpperCase()}
+        </Typography>
+      )}
     </Stack>
   );
 }

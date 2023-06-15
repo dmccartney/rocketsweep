@@ -1,9 +1,17 @@
-import { useAccount, useEnsAddress } from "wagmi";
+import {
+  useAccount,
+  useContract,
+  useContractWrite,
+  useEnsAddress,
+  usePrepareContractWrite,
+  useWebSocketProvider,
+} from "wagmi";
 import Layout from "../components/Layout";
 import { useParams } from "react-router-dom";
 import {
   Button,
   CircularProgress,
+  FormHelperText,
   Grid,
   IconButton,
   Stack,
@@ -21,13 +29,20 @@ import {
   ExpandMore,
   Help,
 } from "@mui/icons-material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ClaimAndStakeForm from "../components/ClaimAndStakeForm";
 import useNodeFinalizedRewardSnapshots from "../hooks/useNodeFinalizedRewardSnapshots";
 import _ from "lodash";
 import { ethers } from "ethers";
 import useCanConnectedAccountWithdraw from "../hooks/useCanConnectedAccountWithdraw";
 import useMinipoolDetails from "../hooks/useMinipoolDetails";
+import CurrencyValue from "../components/CurrencyValue";
+import useNodeContinuousRewards from "../hooks/useNodeContinuousRewards";
+import useGasPrice from "../hooks/useGasPrice";
+import GasInfoFooter from "../components/GasInfoFooter";
+import DistributeEfficiencyAlert from "../components/DistributeEfficiencyAlert";
+import useNodeFeeDistributorInfo from "../hooks/useNodeFeeDistributorInfo";
+import contracts from "../contracts";
 
 function PeriodicRewardsHeaderCard({ sx, nodeAddress }) {
   let finalized = useNodeFinalizedRewardSnapshots({ nodeAddress });
@@ -104,6 +119,113 @@ function PeriodicRewardsHeaderCard({ sx, nodeAddress }) {
   );
 }
 
+function ClaimTipsMEVTooltip({ gasAmount, ethTotal }) {
+  const gasPrice = useGasPrice();
+  const estGas = gasPrice.mul(gasAmount);
+  return (
+    <Stack direction="column" spacing={1} sx={{ m: 1 }}>
+      <Stack direction="column" spacing={0} sx={{ m: 0, mb: 1 }}>
+        <Stack
+          direction="row"
+          alignItems="baseline"
+          justifyContent="space-between"
+        >
+          <CurrencyValue
+            value={ethTotal.sub(estGas)}
+            currency="eth"
+            placeholder="0"
+          />
+        </Stack>
+        <FormHelperText sx={{ m: 0 }}>
+          approximate receipts (after gas)
+        </FormHelperText>
+      </Stack>
+      <DistributeEfficiencyAlert gasAmount={gasAmount} nodeTotal={ethTotal} />
+      <GasInfoFooter gasAmount={gasAmount} />
+    </Stack>
+  );
+}
+
+function ClaimTipsMEVButton({ nodeAddress }) {
+  let { executionNodeTotal } = useNodeContinuousRewards({ nodeAddress });
+  let feeDistributor = useNodeFeeDistributorInfo({ nodeAddress });
+  let canWithdraw = useCanConnectedAccountWithdraw(nodeAddress);
+  let disabled = !canWithdraw || !feeDistributor?.feeDistributorAddress;
+  const prep = usePrepareContractWrite({
+    address: feeDistributor?.feeDistributorAddress,
+    abi: contracts.RocketNodeDistributorInterface.abi,
+    functionName: "distribute",
+    args: [],
+    enabled: !disabled,
+  });
+  let [estimateGasAmount, setEstimateGasAmount] = useState(
+    ethers.BigNumber.from(104000)
+  );
+  let provider = useWebSocketProvider();
+  let dist = useContract({
+    address: feeDistributor?.feeDistributorAddress,
+    abi: contracts.RocketNodeDistributorInterface.abi,
+    signerOrProvider: provider,
+  });
+  useEffect(() => {
+    if (!dist) {
+      return;
+    }
+    let cancelled = false;
+    dist.estimateGas
+      .distribute()
+      .then((estimate) => !cancelled && setEstimateGasAmount(estimate))
+      // .catch((err) => !cancelled && console.log("error estimating gas", err));
+      .catch((ignore) => {});
+    return () => (cancelled = true);
+  }, [dist]);
+  let distribute = useContractWrite({
+    ...prep.config,
+  });
+  const gasAmount = prep.data?.request?.gasLimit || estimateGasAmount;
+  return (
+    <Tooltip
+      arrow
+      title={
+        <ClaimTipsMEVTooltip
+          gasAmount={gasAmount}
+          ethTotal={executionNodeTotal}
+        />
+      }
+    >
+      <Stack
+        direction="row"
+        alignItems="center"
+        sx={{ cursor: !disabled ? "inherit" : "not-allowed" }}
+      >
+        <Button
+          onClick={() => distribute.writeAsync()}
+          disabled={disabled}
+          sx={(theme) => ({
+            mr: 1,
+            "&.Mui-disabled": {
+              borderColor: theme.palette.gray.main,
+              color: theme.palette.gray.main,
+            },
+          })}
+          variant="outlined"
+          size="small"
+        >
+          Distribute
+        </Button>
+        <Stack sx={{ mr: 4 }} spacing={0} direction="column">
+          <CurrencyValue
+            size="xsmall"
+            value={executionNodeTotal}
+            currency="eth"
+          />
+          <FormHelperText sx={{ m: 0 }}>Tips/MEV</FormHelperText>
+        </Stack>
+      </Stack>
+    </Tooltip>
+  );
+}
+
 function ContinuousRewardsHeaderCard({
   sx,
   nodeAddress,
@@ -124,23 +246,12 @@ function ContinuousRewardsHeaderCard({
           <Typography color="text.secondary" variant="subtitle2">
             Continuous Rewards
           </Typography>
-          <Tooltip title="Rocket Pool Guide: skimming rewards">
-            <IconButton
-              href="https://docs.rocketpool.net/guides/node/skimming.html"
-              sx={{ opacity: 0.5 }}
-              component="a"
-              target="_blank"
-              color="inherit"
-              size="small"
-            >
-              <Help fontSize="inherit" />
-            </IconButton>
-          </Tooltip>
         </Stack>
       </Grid>
-      {minipools.length > 0 && (
-        <>
-          <Grid item sx={{ pl: 7 }} xs={12} md={8}>
+      <Grid item sx={{ pl: 7 }} xs={12} md={8}>
+        <Stack direction="row" alignItems="center">
+          <ClaimTipsMEVButton nodeAddress={nodeAddress} />
+          {minipools.length > 0 && (
             <Button
               onClick={onToggleShowBatch}
               variant="outlined"
@@ -150,9 +261,9 @@ function ContinuousRewardsHeaderCard({
             >
               Distribute All
             </Button>
-          </Grid>
-        </>
-      )}
+          )}
+        </Stack>
+      </Grid>
     </Grid>
   );
 }

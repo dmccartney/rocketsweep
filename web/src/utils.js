@@ -103,10 +103,10 @@ export function safeAppUrl({
   safeAddress,
   appUrl = process.env.REACT_APP_ROCKET_SWEEP_URL,
 }) {
-  const url = new URL(`https://app.safe.global/apps/open`)
-  url.searchParams.append('safe', `eth:${safeAddress}`)
-  url.searchParams.append('appUrl', appUrl)
-  return url.toString()
+  const url = new URL(`https://app.safe.global/apps/open`);
+  url.searchParams.append("safe", `eth:${safeAddress}`);
+  url.searchParams.append("appUrl", appUrl);
+  return url.toString();
 }
 
 export function bnSum(arr) {

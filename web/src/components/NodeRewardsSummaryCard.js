@@ -15,9 +15,8 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import { bnSum, MinipoolStatus, rocketscanUrl, trimValue } from "../utils";
+import { bnSum, rocketscanUrl, trimValue } from "../utils";
 import { ethers } from "ethers";
-import useMinipoolDetails from "../hooks/useMinipoolDetails";
 import { ResponsiveContainer, Treemap } from "recharts";
 import WalletChip from "./WalletChip";
 import { useEnsName } from "wagmi";
@@ -26,9 +25,11 @@ import { AllInclusive, EventRepeat, OpenInNew } from "@mui/icons-material";
 import CurrencyValue from "./CurrencyValue";
 import useNodeFinalizedRewardSnapshots from "../hooks/useNodeFinalizedRewardSnapshots";
 import useNodeDetails from "../hooks/useNodeDetails";
+import useNodeContinuousRewards from "../hooks/useNodeContinuousRewards";
+import { useState } from "react";
 
 function SummaryCardHeader({ nodeAddress }) {
-  const continuous = useContinuousRewards({ nodeAddress });
+  const continuous = useNodeContinuousRewards({ nodeAddress });
   const { data: details } = useNodeDetails({ nodeAddress });
   let rplStakeText = "-.---";
   if (details?.rplStake) {
@@ -125,8 +126,77 @@ function PeriodicRewardsCard({
   );
 }
 
-function ContinuousRewardsCard({ nodeTotal, protocolTotal, minipools }) {
+function ContinuousTreemapContent(props) {
+  let { color, x, y, width, height, onHoveredName, highlighted, name } = props;
+  return (
+    <g>
+      <rect
+        x={x}
+        y={y}
+        width={width}
+        height={height}
+        onMouseEnter={() => onHoveredName(name)}
+        onMouseLeave={() => onHoveredName("")}
+        style={{
+          cursor: "pointer",
+          fill: color || "#00000000",
+          opacity: !highlighted
+            ? 1
+            : (name || "").startsWith(highlighted)
+            ? 1
+            : 0.25,
+        }}
+      />
+    </g>
+  );
+}
+
+function ContinuousRewardRow({
+  nodeAddress,
+  to,
+  toColor,
+  name,
+  highlighted,
+  ...props
+}) {
+  const rewards = useNodeContinuousRewards({ nodeAddress });
+  const value = rewards[name] || ethers.constants.Zero;
+  return (
+    <Stack
+      sx={{
+        cursor: "pointer",
+        opacity: !highlighted ? 1 : name.startsWith(highlighted) ? 1 : 0.25,
+      }}
+      direction="row"
+      spacing={0.7}
+      alignItems="end"
+      {...props}
+    >
+      <CurrencyValue value={value} size="xsmall" currency="eth" hideCurrency />
+      <FormHelperText>
+        to{" "}
+        <Typography variant="caption" color={toColor}>
+          {to}
+        </Typography>
+      </FormHelperText>
+    </Stack>
+  );
+}
+
+function ContinuousRewardsCard({ nodeAddress }) {
   let theme = useTheme();
+  const {
+    nodeTotal,
+    consensusNodeTotal,
+    executionNodeTotal,
+
+    protocolTotal,
+    consensusProtocolTotal,
+    executionProtocolTotal,
+
+    minipools,
+  } = useNodeContinuousRewards({ nodeAddress });
+  let [highlighted, setHighlighted] = useState("");
   return (
     <Card elevation={5}>
       <CardHeader
@@ -152,26 +222,134 @@ function ContinuousRewardsCard({ nodeTotal, protocolTotal, minipools }) {
           staking minipools
         </FormHelperText>
         {nodeTotal.isZero() && protocolTotal.isZero() ? null : (
-          <ResponsiveContainer height={36} width="100%">
-            <Treemap
-              colorPanel={[theme.palette.eth.main, theme.palette.eth.light]}
-              data={[
-                {
-                  name: `${trimValue(
-                    ethers.utils.formatUnits(nodeTotal)
-                  )} to You`,
-                  value: Number(ethers.utils.formatUnits(nodeTotal)),
-                },
-                {
-                  name: `${trimValue(
-                    ethers.utils.formatUnits(protocolTotal)
-                  )} to rETH`,
-                  value: Number(ethers.utils.formatUnits(protocolTotal)),
-                },
-              ]}
-              isAnimationActive={false}
-            />
-          </ResponsiveContainer>
+          <>
+            <ResponsiveContainer height={20} width="100%">
+              <Treemap
+                colorPanel={[theme.palette.eth.main, theme.palette.eth.light]}
+                data={[
+                  {
+                    name: "Consensus",
+                    children: [
+                      {
+                        name: "consensusNodeTotal",
+                        value: Number(
+                          ethers.utils.formatUnits(consensusNodeTotal)
+                        ),
+                        color: theme.palette.eth.main,
+                      },
+                      {
+                        name: "consensusProtocolTotal",
+                        value: Number(
+                          ethers.utils.formatUnits(consensusProtocolTotal)
+                        ),
+                        color: theme.palette.eth.light,
+                      },
+                    ],
+                  },
+                  {
+                    name: "Execution",
+                    children: [
+                      {
+                        name: "executionNodeTotal",
+                        value: Number(
+                          ethers.utils.formatUnits(executionNodeTotal)
+                        ),
+                        color: theme.palette.eth.main,
+                      },
+                      {
+                        name: "executionProtocolTotal",
+                        value: Number(
+                          ethers.utils.formatUnits(executionProtocolTotal)
+                        ),
+                        color: theme.palette.eth.light,
+                      },
+                    ],
+                  },
+                ]}
+                content={
+                  <ContinuousTreemapContent
+                    highlighted={highlighted}
+                    onHoveredName={(name) => setHighlighted(name)}
+                  />
+                }
+                isAnimationActive={false}
+              />
+            </ResponsiveContainer>
+            <Stack
+              sx={{ mt: 0.5 }}
+              justifyContent="space-between"
+              direction="row"
+            >
+              <Stack direction="column">
+                <FormHelperText
+                  sx={{
+                    cursor: "pointer",
+                    opacity: !highlighted
+                      ? 1
+                      : highlighted.startsWith("consensus")
+                      ? 1
+                      : 0.25,
+                  }}
+                  onMouseEnter={() => setHighlighted("consensus")}
+                  onMouseLeave={() => setHighlighted("")}
+                >
+                  Consensus (skimming etc)
+                </FormHelperText>
+                <ContinuousRewardRow
+                  to="You"
+                  toColor={theme.palette.eth.main}
+                  name="consensusNodeTotal"
+                  nodeAddress={nodeAddress}
+                  highlighted={highlighted}
+                  onMouseEnter={() => setHighlighted("consensusNodeTotal")}
+                  onMouseLeave={() => setHighlighted("")}
+                />
+                <ContinuousRewardRow
+                  to="rETH"
+                  toColor={theme.palette.eth.light}
+                  name="consensusProtocolTotal"
+                  nodeAddress={nodeAddress}
+                  highlighted={highlighted}
+                  onMouseEnter={() => setHighlighted("consensusProtocolTotal")}
+                  onMouseLeave={() => setHighlighted("")}
+                />
+              </Stack>
+              <Stack direction="column">
+                <FormHelperText
+                  sx={{
+                    cursor: "pointer",
+                    opacity: !highlighted
+                      ? 1
+                      : highlighted.startsWith("execution")
+                      ? 1
+                      : 0.25,
+                  }}
+                  onMouseEnter={() => setHighlighted("execution")}
+                  onMouseLeave={() => setHighlighted("")}
+                >
+                  Execution (tips/mev)
+                </FormHelperText>
+                <ContinuousRewardRow
+                  to="You"
+                  toColor={theme.palette.eth.main}
+                  name="executionNodeTotal"
+                  nodeAddress={nodeAddress}
+                  highlighted={highlighted}
+                  onMouseEnter={() => setHighlighted("executionNodeTotal")}
+                  onMouseLeave={() => setHighlighted("")}
+                />
+                <ContinuousRewardRow
+                  to="rETH"
+                  toColor={theme.palette.eth.light}
+                  name="executionProtocolTotal"
+                  nodeAddress={nodeAddress}
+                  highlighted={highlighted}
+                  onMouseEnter={() => setHighlighted("executionProtocolTotal")}
+                  onMouseLeave={() => setHighlighted("")}
+                />
+              </Stack>
+            </Stack>
+          </>
         )}
       </CardContent>
     </Card>
@@ -194,30 +372,10 @@ function usePeriodicRewards({ nodeAddress }) {
   return { unclaimed, unclaimedEthTotal, unclaimedRplTotal };
 }
 
-function useContinuousRewards({ nodeAddress }) {
-  let minipools = useMinipoolDetails(nodeAddress);
-  let minipoolCount = minipools?.length;
-  let isLoadingCount = minipools.filter(({ isLoading }) => isLoading).length;
-  minipools = minipools.filter(
-    ({ status }) => status === MinipoolStatus.staking
-  );
-  const nodeTotal = bnSum(
-    minipools
-      .filter(({ upgraded }) => upgraded)
-      .map(({ nodeBalance }) => nodeBalance)
-  );
-  const protocolTotal = bnSum(
-    minipools
-      .filter(({ upgraded }) => upgraded)
-      .map(({ protocolBalance }) => protocolBalance)
-  );
-  return { nodeTotal, protocolTotal, minipools, minipoolCount, isLoadingCount };
-}
-
 const oneHundred = ethers.utils.parseUnits("100");
 function SummaryCardContent({ nodeAddress, size = "large" }) {
   const periodic = usePeriodicRewards({ nodeAddress });
-  const continuous = useContinuousRewards({ nodeAddress });
+  const continuous = useNodeContinuousRewards({ nodeAddress });
   const ethTotal = continuous.nodeTotal?.add(periodic.unclaimedEthTotal);
   const rplTotal = periodic.unclaimedRplTotal;
   let fontSize =
@@ -283,7 +441,7 @@ function SummaryCardContent({ nodeAddress, size = "large" }) {
       {size === "small" ? null : (
         <>
           <PeriodicRewardsCard sx={{ mt: 2, mb: 3 }} {...periodic} />
-          <ContinuousRewardsCard {...continuous} />
+          <ContinuousRewardsCard nodeAddress={nodeAddress} />
         </>
       )}
     </CardContent>

@@ -229,10 +229,7 @@ function SafeAlert({ sx, label, nodeAddress, safeAddress }) {
   }
   return (
     <Card sx={sx} elevation={8} square>
-      <CardActionArea
-        href={safeAppUrl({ safeAddress })}
-        target="_blank"
-      >
+      <CardActionArea href={safeAppUrl({ safeAddress })} target="_blank">
         <CardHeader
           avatar={<SafeIcon color="primary" size={"medium"} />}
           title={"Open as Safe App"}
