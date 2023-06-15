@@ -2,6 +2,7 @@ import RocketMerkleDistributorMainnet from "./generated/contracts/RocketMerkleDi
 import RocketMinipoolBase from "./generated/contracts/RocketMinipoolBase.json";
 import RocketMinipoolDelegate from "./generated/contracts/RocketMinipoolDelegate.json";
 import RocketMinipoolManager from "./generated/contracts/RocketMinipoolManager.json";
+import RocketNodeDistributorInterface from "./generated/contracts/RocketNodeDistributorInterface.json";
 import RocketNodeManager from "./generated/contracts/RocketNodeManager.json";
 import RocketRewardsPool from "./generated/contracts/RocketRewardsPool.json";
 import RocketStorageK from "./generated/contracts/RocketStorage.json";
@@ -24,6 +25,10 @@ const contracts = {
       "0x6293b8abc1f36afb22406be5f96d893072a8cf3a",
     ],
     abi: RocketMinipoolManager.abi,
+  },
+  RocketNodeDistributorInterface: {
+    // see RocketNodeManager.Read.getNodeDetails -> .feeDistributorAddress
+    abi: RocketNodeDistributorInterface.abi,
   },
   RocketNodeManager: {
     address: "0x89F478E6Cc24f052103628f36598D4C14Da3D287",
