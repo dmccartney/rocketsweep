@@ -10,7 +10,7 @@ import {
   Stack,
   Tooltip,
 } from "@mui/material";
-import { OpenInNew, Warning } from "@mui/icons-material";
+import { OpenInNew } from "@mui/icons-material";
 import { ethers } from "ethers";
 import {
   useContract,
@@ -68,8 +68,8 @@ const MINIPOOL_COLS = [
   },
   {
     field: "distribute",
-    headerName: "",
-    width: 150,
+    headerName: "Skimming etc",
+    width: 125,
     sortable: false,
     renderCell: ({ row }) => {
       let balance = ethers.BigNumber.from(row.balance || "0");
@@ -187,7 +187,6 @@ function DistributeButton({
   upgraded,
 }) {
   let canWithdraw = useCanConnectedAccountWithdraw(nodeAddress);
-  let hasLowBalance = nodeBalance.lt(ethers.utils.parseEther("0.4"));
   let hasTooHighBalance = balance.gt(ethers.utils.parseEther("8"));
   let disabled = !upgraded || !canWithdraw || hasTooHighBalance; // over 8 ETH you cannot skim rewards.
   const prep = usePrepareContractWrite({
@@ -247,7 +246,6 @@ function DistributeButton({
               color: theme.palette.gray.main,
             },
           })}
-          endIcon={hasLowBalance ? <Warning /> : null}
         >
           Distribute
         </Button>

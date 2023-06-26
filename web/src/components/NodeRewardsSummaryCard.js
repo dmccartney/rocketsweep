@@ -293,7 +293,7 @@ function ContinuousRewardsCard({ nodeAddress }) {
                   onMouseEnter={() => setHighlighted("consensus")}
                   onMouseLeave={() => setHighlighted("")}
                 >
-                  Consensus (skimming etc)
+                  Consensus (skimming)
                 </FormHelperText>
                 <ContinuousRewardRow
                   to="You"
@@ -372,14 +372,13 @@ function usePeriodicRewards({ nodeAddress }) {
   return { unclaimed, unclaimedEthTotal, unclaimedRplTotal };
 }
 
-const oneHundred = ethers.utils.parseUnits("100");
+const ten = ethers.utils.parseUnits("10");
 function SummaryCardContent({ nodeAddress, size = "large" }) {
   const periodic = usePeriodicRewards({ nodeAddress });
   const continuous = useNodeContinuousRewards({ nodeAddress });
   const ethTotal = continuous.nodeTotal?.add(periodic.unclaimedEthTotal);
   const rplTotal = periodic.unclaimedRplTotal;
-  let fontSize =
-    ethTotal?.gt(oneHundred) || rplTotal?.gt(oneHundred) ? "medium" : "large";
+  let fontSize = ethTotal?.gt(ten) || rplTotal?.gt(ten) ? "medium" : "large";
   let unupgradedMps = continuous?.minipools?.filter(
     ({ upgraded }) => upgraded === false
   );
