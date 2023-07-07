@@ -117,12 +117,37 @@ export function bnSum(arr) {
 }
 
 // This is derived from gas profiling analysis.
-export function estimateDistributeBatchGas(batchSize) {
+export function estimateDistributeConsensusBatchGas(batchSize) {
+  if (batchSize === 0) {
+    return ethers.constants.Zero;
+  }
   let count = ethers.BigNumber.from(batchSize);
   return ethers.BigNumber.from(21000) // txn init
     .add(count.mul(1000)) // call data
-    .add(count.mul(53000)) // typical distributeBalance call
+    .add(count.mul(57000)) // typical distributeBalance call
     .sub(count.mul(4800)); // typical gas refund
+}
+
+// This is derived from gas profiling analysis.
+export function estimateClaimIntervalsGas(intervalCount, isZeroRplStake) {
+  if (intervalCount === 0) {
+    return ethers.constants.Zero;
+  }
+  let count = ethers.BigNumber.from(intervalCount);
+  return ethers.BigNumber.from(21000) // txn init
+    .add(count.mul(9000)) // call data
+    .add(30000) // top-level address lookups etc
+    .add(count.mul(20000)) // verify proofs and claim
+    .add(60000) // transfer RPL
+    .add(20000) // transfer ETH
+    .add(isZeroRplStake ? 0 : 125000) // staking call cost
+    .sub(count.mul(4000)); // typical gas refund
+}
+
+// This is derived from gas profiling analysis.
+export function estimateTipsMevGas() {
+  return ethers.BigNumber.from(21000) // txn init
+    .add(155000); // typical distribute call
 }
 
 export const MinipoolStatus = {
@@ -147,6 +172,19 @@ export const distributeBalanceInterface = new ethers.utils.Interface([
 
 export const distributeBalanceEncoded =
   distributeBalanceInterface.encodeFunctionData("distributeBalance", [true]);
+
+export const distributeInterface = new ethers.utils.Interface([
+  {
+    type: "function",
+    name: "distribute",
+    inputs: [],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+]);
+
+export const distributeEncoded =
+  distributeInterface.encodeFunctionData("distribute");
 
 export const delegateUpgradeInterface = new ethers.utils.Interface([
   {

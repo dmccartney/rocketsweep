@@ -1,5 +1,4 @@
 import {
-  useAccount,
   useContract,
   useContractWrite,
   useEnsAddress,
@@ -22,20 +21,10 @@ import NodeRewardsSummaryCard from "../components/NodeRewardsSummaryCard";
 import SafeSweepCard from "../components/SafeSweepCard";
 import NodePeriodicRewardsTable from "../components/NodePeriodicRewardsTable";
 import NodeContinuousRewardsTable from "../components/NodeContinuousRewardsTable";
-import {
-  AllInclusive,
-  EventRepeat,
-  ExpandLess,
-  ExpandMore,
-  Help,
-} from "@mui/icons-material";
+import { AllInclusive, EventRepeat, Help } from "@mui/icons-material";
 import { useEffect, useState } from "react";
-import ClaimAndStakeForm from "../components/ClaimAndStakeForm";
-import useNodeFinalizedRewardSnapshots from "../hooks/useNodeFinalizedRewardSnapshots";
-import _ from "lodash";
 import { ethers } from "ethers";
 import useCanConnectedAccountWithdraw from "../hooks/useCanConnectedAccountWithdraw";
-import useMinipoolDetails from "../hooks/useMinipoolDetails";
 import CurrencyValue from "../components/CurrencyValue";
 import useNodeContinuousRewards from "../hooks/useNodeContinuousRewards";
 import useGasPrice from "../hooks/useGasPrice";
@@ -44,19 +33,7 @@ import DistributeEfficiencyAlert from "../components/DistributeEfficiencyAlert";
 import useNodeFeeDistributorInfo from "../hooks/useNodeFeeDistributorInfo";
 import contracts from "../contracts";
 
-function PeriodicRewardsHeaderCard({ sx, nodeAddress }) {
-  let finalized = useNodeFinalizedRewardSnapshots({ nodeAddress });
-  let canWithdraw = useCanConnectedAccountWithdraw(nodeAddress);
-  let unclaimed = _.filter(finalized, ({ isClaimed }) => !isClaimed);
-  let rewardIndexes = _.map(unclaimed, "rewardIndex");
-  let amountsEth = _.map(unclaimed, "smoothingPoolEth");
-  let merkleProofs = _.map(unclaimed, "merkleProof");
-  let amountsRpl = _.map(unclaimed, ({ collateralRpl, oracleDaoRpl }) =>
-    // TODO: consider moving this to useNodeFinalizedRewardSnapshots
-    ethers.BigNumber.from(collateralRpl || "0").add(
-      ethers.BigNumber.from(oracleDaoRpl || "0")
-    )
-  );
+function PeriodicRewardsHeaderCard({ sx }) {
   return (
     <Grid sx={sx} rowSpacing={2} container alignItems="center">
       <Grid item xs={12} md={4}>
@@ -83,38 +60,6 @@ function PeriodicRewardsHeaderCard({ sx, nodeAddress }) {
           </Tooltip>
         </Stack>
       </Grid>
-      {rewardIndexes.length > 0 && (
-        <Grid item sx={{ pl: 7 }} xs={12} md={8}>
-          <Grid container>
-            <Grid item>
-              <ClaimAndStakeForm
-                sx={{
-                  cursor: canWithdraw ? undefined : "not-allowed",
-                }}
-                buttonProps={{
-                  size: "small",
-                  label: "Claim All",
-                  color: canWithdraw ? "primary" : "gray",
-                }}
-                sliderProps={{
-                  size: "small",
-                  color: canWithdraw ? "rpl" : "gray",
-                  sx: {
-                    width: 144,
-                    pb: 0,
-                  },
-                }}
-                notAllowed={!canWithdraw}
-                nodeAddress={nodeAddress}
-                rewardIndexes={rewardIndexes}
-                amountsEth={amountsEth}
-                amountsRpl={amountsRpl}
-                merkleProofs={merkleProofs}
-              />
-            </Grid>
-          </Grid>
-        </Grid>
-      )}
     </Grid>
   );
 }
@@ -213,7 +158,7 @@ function ClaimTipsMEVButton({ nodeAddress }) {
         >
           Distribute
         </Button>
-        <Stack sx={{ mr: 4 }} spacing={0} direction="column">
+        <Stack spacing={0} direction="column">
           <CurrencyValue
             size="xsmall"
             value={executionNodeTotal}
@@ -226,14 +171,7 @@ function ClaimTipsMEVButton({ nodeAddress }) {
   );
 }
 
-function ContinuousRewardsHeaderCard({
-  sx,
-  nodeAddress,
-  isShowingBatch,
-  onToggleShowBatch,
-}) {
-  let canWithdraw = useCanConnectedAccountWithdraw(nodeAddress);
-  let minipools = useMinipoolDetails(nodeAddress);
+function ContinuousRewardsHeaderCard({ sx, nodeAddress }) {
   return (
     <Grid sx={sx} rowSpacing={2} container alignItems="center">
       <Grid item xs={12} md={4}>
@@ -251,17 +189,6 @@ function ContinuousRewardsHeaderCard({
       <Grid item sx={{ pl: 7 }} xs={12} md={8}>
         <Stack direction="row" alignItems="center">
           <ClaimTipsMEVButton nodeAddress={nodeAddress} />
-          {minipools.length > 0 && (
-            <Button
-              onClick={onToggleShowBatch}
-              variant="outlined"
-              size="small"
-              color={canWithdraw ? "primary" : "gray"}
-              endIcon={isShowingBatch ? <ExpandLess /> : <ExpandMore />}
-            >
-              Distribute All
-            </Button>
-          )}
         </Stack>
       </Grid>
     </Grid>
@@ -269,9 +196,6 @@ function ContinuousRewardsHeaderCard({
 }
 
 export default function NodePage() {
-  let { connector } = useAccount();
-  // When the connected account is a Safe, show the batch sweep card by default.
-  let [isShowingBatch, setShowingBatch] = useState(connector?.id === "safe");
   let { nodeAddressOrName } = useParams();
   let { data: nodeAddress } = useEnsAddress({
     name: nodeAddressOrName,
@@ -290,6 +214,7 @@ export default function NodePage() {
             <NodeRewardsSummaryCard nodeAddress={nodeAddress} />
           </Grid>
           <Grid key={"sweep-table-cards"} item xs={12} lg={8}>
+            <SafeSweepCard sx={{ mb: 4 }} nodeAddress={nodeAddress} />
             <PeriodicRewardsHeaderCard
               sx={{ mb: 2 }}
               nodeAddress={nodeAddress}
@@ -301,12 +226,7 @@ export default function NodePage() {
             <ContinuousRewardsHeaderCard
               sx={{ mb: 2 }}
               nodeAddress={nodeAddress}
-              isShowingBatch={isShowingBatch}
-              onToggleShowBatch={() => setShowingBatch(!isShowingBatch)}
             />
-            {isShowingBatch && (
-              <SafeSweepCard sx={{ mb: 2 }} nodeAddress={nodeAddress} />
-            )}
             <NodeContinuousRewardsTable nodeAddress={nodeAddress} />
           </Grid>
         </Grid>

@@ -4,24 +4,39 @@ import { ethers } from "ethers";
 import {
   Button,
   FormHelperText,
-  Slider,
   Stack,
   Tooltip,
-  Typography,
   useTheme,
 } from "@mui/material";
-import CurrencyValue from "./CurrencyValue";
 import useK from "../hooks/useK";
-import _ from "lodash";
-import useGasPrice from "../hooks/useGasPrice";
-import GasInfoFooter from "./GasInfoFooter";
 import useCanConnectedAccountWithdraw from "../hooks/useCanConnectedAccountWithdraw";
+import useGasPrice from "../hooks/useGasPrice";
+import CurrencyValue from "./CurrencyValue";
+import GasInfoFooter from "./GasInfoFooter";
+import ClaimSlider from "./ClaimSlider";
+import DistributeEfficiencyAlert from "./DistributeEfficiencyAlert";
+import _ from "lodash";
 
-function ClaimButtonTooltip({ gasAmount, ethTotal, rplTotal, stakeAmountRpl }) {
+export function ClaimButtonTooltip({
+  sx,
+  gasAmount,
+  ethTotal,
+  rplTotal,
+  stakeAmountRpl,
+  children,
+}) {
   const gasPrice = useGasPrice();
   const estGas = gasPrice.mul(gasAmount);
   return (
-    <Stack direction="column" spacing={3} sx={{ m: 1 }}>
+    <Stack
+      sx={{
+        p: 1,
+        width: 285,
+        ...sx,
+      }}
+      direction="column"
+      spacing={2}
+    >
       <Stack direction="column" spacing={0} sx={{ m: 0 }}>
         <Stack
           direction="row"
@@ -29,13 +44,11 @@ function ClaimButtonTooltip({ gasAmount, ethTotal, rplTotal, stakeAmountRpl }) {
           alignItems="baseline"
           justifyContent="space-between"
         >
-          {!!ethTotal?.gt(0) && (
-            <CurrencyValue
-              value={ethTotal.sub(estGas)}
-              currency="eth"
-              placeholder="0"
-            />
-          )}
+          <CurrencyValue
+            value={ethTotal.sub(estGas)}
+            currency="eth"
+            placeholder="0"
+          />
           <CurrencyValue
             value={rplTotal.sub(stakeAmountRpl)}
             currency="rpl"
@@ -46,6 +59,14 @@ function ClaimButtonTooltip({ gasAmount, ethTotal, rplTotal, stakeAmountRpl }) {
           approximate receipts (after gas)
         </FormHelperText>
       </Stack>
+      {children}
+      {gasAmount.isZero() ? null : (
+        <DistributeEfficiencyAlert
+          gasAmount={gasAmount}
+          nodeTotal={ethTotal}
+          hideMessage
+        />
+      )}
       <GasInfoFooter gasAmount={gasAmount} />
     </Stack>
   );
@@ -124,7 +145,6 @@ export default function ClaimAndStakeForm({
   merkleProofs,
   buttonProps = {},
   sliderProps = {},
-  helperProps = {},
 }) {
   let totalRpl = bnSum(amountsRpl);
   let [stakeAmountRpl, setStakeAmountRpl] = useState(totalRpl);
@@ -155,8 +175,6 @@ export default function ClaimAndStakeForm({
   let gasAmount = claiming.prepareData?.request?.gasLimit || estimateGasAmount;
   let rplTotal = bnSum(amountsRpl);
   let ethTotal = bnSum(amountsEth);
-  let stakeAmountRplF = Number(ethers.utils.formatUnits(stakeAmountRpl));
-  let maxStakeAmountRplF = Number(ethers.utils.formatUnits(totalRpl));
   return (
     <Tooltip
       arrow
@@ -180,39 +198,12 @@ export default function ClaimAndStakeForm({
           gasAmount={gasAmount}
           {...buttonProps}
         />
-        <Stack direction="column">
-          <Slider
-            value={stakeAmountRplF}
-            color="rpl"
-            valueLabelDisplay="off"
-            onChange={(e) =>
-              setStakeAmountRpl(
-                e.target.value >= maxStakeAmountRplF
-                  ? totalRpl
-                  : ethers.utils.parseUnits(String(e.target.value))
-              )
-            }
-            min={0}
-            max={maxStakeAmountRplF}
-            {...sliderProps}
-          />
-          <Stack
-            direction="row"
-            alignItems="baseline"
-            spacing={1}
-            {...helperProps}
-          >
-            <FormHelperText sx={{ m: 0 }}>and stake</FormHelperText>
-            <Typography variant="default">
-              <CurrencyValue
-                placeholder="0"
-                value={stakeAmountRpl}
-                size="xsmall"
-                currency="rpl"
-              />
-            </Typography>
-          </Stack>
-        </Stack>
+        <ClaimSlider
+          stakeAmountRpl={stakeAmountRpl}
+          totalRpl={totalRpl}
+          onSetStakeAmountRpl={setStakeAmountRpl}
+          sliderProps={sliderProps}
+        />
       </Stack>
     </Tooltip>
   );
