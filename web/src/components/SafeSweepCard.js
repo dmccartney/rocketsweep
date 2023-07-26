@@ -942,7 +942,9 @@ export default function SafeSweepCard({ sx, nodeAddress }) {
               gasAmount={overall.gas}
               ethTotal={overall.eth}
               rplTotal={isClaimingInterval ? totalRpl : ethers.constants.Zero}
-              stakeAmountRpl={isClaimingInterval ? stakeAmountRpl : ethers.constants.Zero}
+              stakeAmountRpl={
+                isClaimingInterval ? stakeAmountRpl : ethers.constants.Zero
+              }
             >
               <Stack>
                 <Grid container columnSpacing={1} rowSpacing={0.5}>

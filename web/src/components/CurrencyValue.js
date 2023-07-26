@@ -26,10 +26,13 @@ const typeVariantBySize = {
 };
 export default function CurrencyValue({
   value = ethers.constants.Zero,
+  prefix = "",
   currency = "eth",
+  perCurrency = null,
   size = (v) => (v.gte(ethers.utils.parseUnits("1000")) ? "small" : "medium"),
   placeholder = "-.---",
-  decimalPlaces = 3,
+  maxDecimals = 4,
+  trimZeroWhole = false,
   hideCurrency = false,
   ...props
 }) {
@@ -42,7 +45,11 @@ export default function CurrencyValue({
   let valueText = placeholder;
   if (value && !value.isZero()) {
     valueText = trimValue(
-      ethers.utils.formatUnits(value.abs() || ethers.constants.Zero)
+      ethers.utils.formatUnits(value.abs() || ethers.constants.Zero),
+      {
+        maxDecimals,
+        trimZeroWhole,
+      }
     );
   }
   if (value && value.isNegative()) {
@@ -59,9 +66,10 @@ export default function CurrencyValue({
         variant={typeVariants.value}
         color={(theme) => theme.palette.text.primary}
       >
+        {prefix}
         {valueText}
       </Typography>
-      {hideCurrency ? null : (
+      {hideCurrency ? null : !perCurrency ? (
         <Typography
           component={"span"}
           variant={typeVariants.currency}
@@ -69,8 +77,36 @@ export default function CurrencyValue({
             theme.palette[currency] ? theme.palette[currency].main : "default"
           }
         >
-          {" "}
           {currency.toUpperCase()}
+        </Typography>
+      ) : (
+        <Typography
+          component={"span"}
+          variant={typeVariants.currency}
+          color="text.secondary"
+        >
+          {" "}
+          <Typography
+            component={"span"}
+            variant={typeVariants.currency}
+            color={(theme) =>
+              theme.palette[currency] ? theme.palette[currency].main : "default"
+            }
+          >
+            {currency.toUpperCase()}
+          </Typography>
+          /
+          <Typography
+            component={"span"}
+            variant={typeVariants.currency}
+            color={(theme) =>
+              theme.palette[perCurrency]
+                ? theme.palette[perCurrency].main
+                : "default"
+            }
+          >
+            {perCurrency.toUpperCase()}
+          </Typography>
         </Typography>
       )}
     </Stack>

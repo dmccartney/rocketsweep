@@ -32,13 +32,17 @@ export function BNSortComparator(a, b) {
 // convert "1234.123415123123123123" into "1,234.1234"
 export function trimValue(
   amountEthish,
-  { maxDecimals = 4, maxLength = 11 } = {}
+  { maxDecimals = 4, maxLength = 11, trimZeroWhole = false } = {}
 ) {
   if (amountEthish.indexOf(".") !== -1) {
     amountEthish = amountEthish.slice(
       0,
       amountEthish.indexOf(".") + maxDecimals + (maxDecimals ? 1 : 0)
     );
+  }
+  if (trimZeroWhole && amountEthish.indexOf("0.") === 0) {
+    amountEthish = amountEthish.substring(1);
+    return amountEthish.substring(0, maxLength);
   }
   if (amountEthish.length <= maxLength) {
     return `${ethers.utils.commify(amountEthish)}`;
