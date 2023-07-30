@@ -328,14 +328,8 @@ function SafeAlert({ sx, nodeAddress }) {
     ? nodeAddress
     : null;
   if (!safeAddress) {
-    return (
-      <Alert severity="warning" sx={sx}>
-        Sweep requires the node or its withdrawal address to be a{" "}
-        <Link href="https://safe.global/" target="_blank">
-          Safe
-        </Link>
-      </Alert>
-    );
+    // No alert when it has no Safe address.
+    return null;
   }
   if (connector?.id === "safe") {
     // No alert when it is already open as a Safe app.
@@ -908,6 +902,9 @@ export default function SafeSweepCard({ sx, nodeAddress }) {
     overall,
   } = sweeper;
   let withdrawalAddress = useNodeWithdrawalAddress(nodeAddress);
+  let hasSafeWithdrawalAddress = useCouldBeSafeContract(withdrawalAddress);
+  let hasSafeNodeAddress = useCouldBeSafeContract(nodeAddress);
+  let hasAnySafeAddress = hasSafeWithdrawalAddress || hasSafeNodeAddress;
   const isSafeConnected = connector?.id === "safe";
   const isNodeOrWithdrawalAddress =
     address === nodeAddress || address === withdrawalAddress;
@@ -938,126 +935,139 @@ export default function SafeSweepCard({ sx, nodeAddress }) {
           arrow
           // placement="bottom-start"
           title={
-            <ClaimButtonTooltip
-              gasAmount={overall.gas}
-              ethTotal={overall.eth}
-              rplTotal={isClaimingInterval ? totalRpl : ethers.constants.Zero}
-              stakeAmountRpl={
-                isClaimingInterval ? stakeAmountRpl : ethers.constants.Zero
-              }
-            >
-              <Stack>
-                <Grid container columnSpacing={1} rowSpacing={0.5}>
-                  {!isClaimingInterval ? null : (
-                    <>
-                      <Grid item xs={4.5}>
-                        <Stack direction="row" justifyContent="flex-end">
-                          <Typography
-                            component="span"
-                            variant="caption"
-                            color="text.secondary"
-                          >
+            <Stack>
+              <ClaimButtonTooltip
+                gasAmount={overall.gas}
+                ethTotal={overall.eth}
+                rplTotal={isClaimingInterval ? totalRpl : ethers.constants.Zero}
+                stakeAmountRpl={
+                  isClaimingInterval ? stakeAmountRpl : ethers.constants.Zero
+                }
+              >
+                <Stack>
+                  <Grid container columnSpacing={1} rowSpacing={0.5}>
+                    {!isClaimingInterval ? null : (
+                      <>
+                        <Grid item xs={4.5}>
+                          <Stack direction="row" justifyContent="flex-end">
                             <Typography
                               component="span"
                               variant="caption"
-                              color="text.primary"
+                              color="text.secondary"
                             >
-                              {rewardIndexes?.length}
-                            </Typography>{" "}
-                            interval{rewardIndexes?.length === 1 ? "" : "s"}
-                          </Typography>
-                        </Stack>
-                      </Grid>
-                      <Grid item xs={7.5}>
-                        <Stack
-                          direction="row"
-                          spacing={1}
-                          justifyContent="flex-start"
-                        >
-                          <CurrencyValue
-                            size="xsmall"
-                            value={totalEth}
-                            currency="eth"
-                            placeholder="0"
-                          />
-                          <CurrencyValue
-                            size="xsmall"
-                            value={totalRpl}
-                            currency="rpl"
-                            placeholder="0"
-                          />
-                        </Stack>
-                      </Grid>
-                    </>
-                  )}
-                  {!isDistributingTipsMev ? null : (
-                    <>
-                      <Grid item xs={4.5}>
-                        <Stack direction="row" justifyContent="flex-end">
-                          <Typography
-                            component="span"
-                            variant="caption"
-                            color="text.secondary"
+                              <Typography
+                                component="span"
+                                variant="caption"
+                                color="text.primary"
+                              >
+                                {rewardIndexes?.length}
+                              </Typography>{" "}
+                              interval{rewardIndexes?.length === 1 ? "" : "s"}
+                            </Typography>
+                          </Stack>
+                        </Grid>
+                        <Grid item xs={7.5}>
+                          <Stack
+                            direction="row"
+                            spacing={1}
+                            justifyContent="flex-start"
                           >
-                            tips/MEV
-                          </Typography>
-                        </Stack>
-                      </Grid>
-                      <Grid item xs={7.5}>
-                        <Stack
-                          direction="row"
-                          spacing={1}
-                          justifyContent="flex-start"
-                        >
-                          <CurrencyValue
-                            size="xsmall"
-                            value={executionNodeTotal}
-                            currency="eth"
-                            placeholder="0"
-                          />
-                        </Stack>
-                      </Grid>
-                    </>
-                  )}
-                  {!isDistributingConsensus ? null : (
-                    <>
-                      <Grid item xs={4.5}>
-                        <Stack direction="row" justifyContent="flex-end">
-                          <Typography
-                            component="span"
-                            variant="caption"
-                            color="text.secondary"
-                          >
+                            <CurrencyValue
+                              size="xsmall"
+                              value={totalEth}
+                              currency="eth"
+                              placeholder="0"
+                            />
+                            <CurrencyValue
+                              size="xsmall"
+                              value={totalRpl}
+                              currency="rpl"
+                              placeholder="0"
+                            />
+                          </Stack>
+                        </Grid>
+                      </>
+                    )}
+                    {!isDistributingTipsMev ? null : (
+                      <>
+                        <Grid item xs={4.5}>
+                          <Stack direction="row" justifyContent="flex-end">
                             <Typography
                               component="span"
                               variant="caption"
-                              color="text.primary"
+                              color="text.secondary"
                             >
-                              {currentBatch?.length}
-                            </Typography>{" "}
-                            minipool{currentBatch?.length === 1 ? "" : "s"}
-                          </Typography>
-                        </Stack>
-                      </Grid>
-                      <Grid item xs={7.5}>
-                        <Stack
-                          direction="row"
-                          spacing={1}
-                          justifyContent="flex-start"
-                        >
-                          <CurrencyValue
-                            size="xsmall"
-                            value={currentBatchAmount}
-                            currency="eth"
-                            placeholder="0"
-                          />
-                        </Stack>
-                      </Grid>
-                    </>
-                  )}
-                </Grid>
-              </Stack>
-            </ClaimButtonTooltip>
+                              tips/MEV
+                            </Typography>
+                          </Stack>
+                        </Grid>
+                        <Grid item xs={7.5}>
+                          <Stack
+                            direction="row"
+                            spacing={1}
+                            justifyContent="flex-start"
+                          >
+                            <CurrencyValue
+                              size="xsmall"
+                              value={executionNodeTotal}
+                              currency="eth"
+                              placeholder="0"
+                            />
+                          </Stack>
+                        </Grid>
+                      </>
+                    )}
+                    {!isDistributingConsensus ? null : (
+                      <>
+                        <Grid item xs={4.5}>
+                          <Stack direction="row" justifyContent="flex-end">
+                            <Typography
+                              component="span"
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              <Typography
+                                component="span"
+                                variant="caption"
+                                color="text.primary"
+                              >
+                                {currentBatch?.length}
+                              </Typography>{" "}
+                              minipool{currentBatch?.length === 1 ? "" : "s"}
+                            </Typography>
+                          </Stack>
+                        </Grid>
+                        <Grid item xs={7.5}>
+                          <Stack
+                            direction="row"
+                            spacing={1}
+                            justifyContent="flex-start"
+                          >
+                            <CurrencyValue
+                              size="xsmall"
+                              value={currentBatchAmount}
+                              currency="eth"
+                              placeholder="0"
+                            />
+                          </Stack>
+                        </Grid>
+                      </>
+                    )}
+                  </Grid>
+                </Stack>
+              </ClaimButtonTooltip>
+              {!hasAnySafeAddress && (
+                <Alert severity="warning" sx={{ mt: 1, mb: 1 }}>
+                  Sweeping it all in one transaction requires the node or its
+                  withdrawal address to be a{" "}
+                  <Link href="https://safe.global/" target="_blank">
+                    Safe
+                  </Link>
+                  . Otherwise, you can still "Distribute" or "Claim" each reward
+                  individually.
+                </Alert>
+              )}
+            </Stack>
           }
         >
           <Stack
