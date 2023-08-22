@@ -24,7 +24,7 @@ export function GasInfo({
             sx={{ pl: 1, pr: 0.5 }}
             variant="inherit"
             component="span"
-            color="white"
+            color="text.primary"
           >
             {trimValue(ethers.utils.formatUnits(gasPrice, "gwei"), {
               maxDecimals: 0,
