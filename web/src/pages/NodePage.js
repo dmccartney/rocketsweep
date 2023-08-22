@@ -32,6 +32,7 @@ import GasInfoFooter from "../components/GasInfoFooter";
 import DistributeEfficiencyAlert from "../components/DistributeEfficiencyAlert";
 import useNodeFeeDistributorInfo from "../hooks/useNodeFeeDistributorInfo";
 import contracts from "../contracts";
+import RewardsHelpInfo from "../components/RewardsHelpInfo";
 
 function PeriodicRewardsHeaderCard({ sx }) {
   return (
@@ -46,7 +47,7 @@ function PeriodicRewardsHeaderCard({ sx }) {
           <Typography color="text.secondary" variant="subtitle2">
             Periodic Rewards
           </Typography>
-          <Tooltip title="Rocket Pool Guide: claiming rewards">
+          <Tooltip title={<RewardsHelpInfo />}>
             <IconButton
               href="https://docs.rocketpool.net/guides/node/rewards.html"
               sx={{ opacity: 0.5 }}

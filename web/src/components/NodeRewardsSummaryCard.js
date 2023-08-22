@@ -11,6 +11,7 @@ import {
   CircularProgress,
   Divider,
   FormHelperText,
+  IconButton,
   Stack,
   Tooltip,
   Typography,
@@ -38,6 +39,7 @@ import {
   Done,
   Error,
   EventRepeat,
+  Help,
   OpenInNew,
   Warning,
 } from "@mui/icons-material";
@@ -48,8 +50,9 @@ import useNodeFinalizedRewardSnapshots from "../hooks/useNodeFinalizedRewardSnap
 import useNodeRplStatus from "../hooks/useNodeRplStatus";
 import useRplEthPrice from "../hooks/useRplEthPrice";
 import { useState } from "react";
+import RewardsHelpInfo from "./RewardsHelpInfo";
 
-function SummaryCardHeader({ nodeAddress }) {
+function SummaryCardHeader({ asLink, nodeAddress }) {
   const continuous = useNodeContinuousRewards({ nodeAddress });
   const { data: details } = useNodeDetails({ nodeAddress });
   let { rplStake } = details || {
@@ -156,6 +159,7 @@ function SummaryCardHeader({ nodeAddress }) {
 
 function PeriodicRewardsCard({
   sx,
+  asLink,
   unclaimed,
   unclaimedEthTotal,
   unclaimedRplTotal,
@@ -165,6 +169,28 @@ function PeriodicRewardsCard({
       <CardHeader
         avatar={<EventRepeat fontSize="medium" color="disabled" />}
         subheader="Periodic Rewards"
+        action={
+          <Tooltip title={<RewardsHelpInfo />}>
+            {asLink ? (
+              <Typography color="text.secondary">
+                <Help sx={{ mt: 0, ml: 1, mr: 1 }} fontSize="small" />
+              </Typography>
+            ) : (
+              <IconButton
+                href="https://docs.rocketpool.net/guides/node/rewards.html"
+                sx={{ opacity: 0.5 }}
+                component="a"
+                target="_blank"
+                color="inherit"
+                size="small"
+              >
+                <Typography color="text.secondary">
+                  <Help sx={{ mt: 0, ml: 1, mr: 1 }} fontSize="small" />
+                </Typography>
+              </IconButton>
+            )}
+          </Tooltip>
+        }
       />
       <CardContent sx={{ pt: 0 }}>
         <Stack direction="row" sx={{ mb: 2 }} spacing={2} justifyContent="left">
@@ -973,7 +999,7 @@ function RplStakeChart({ sx, nodeAddress }) {
 }
 
 const ten = ethers.utils.parseUnits("10");
-function SummaryCardContent({ nodeAddress, size = "large" }) {
+function SummaryCardContent({ asLink, nodeAddress, size = "large" }) {
   const periodic = usePeriodicRewards({ nodeAddress });
   const continuous = useNodeContinuousRewards({ nodeAddress });
   const ethTotal = continuous.nodeTotal?.add(periodic.unclaimedEthTotal);
@@ -1039,8 +1065,12 @@ function SummaryCardContent({ nodeAddress, size = "large" }) {
       )}
       {size === "small" ? null : (
         <>
-          <PeriodicRewardsCard sx={{ mt: 2, mb: 3 }} {...periodic} />
-          <ContinuousRewardsCard nodeAddress={nodeAddress} />
+          <PeriodicRewardsCard
+            sx={{ mt: 2, mb: 3 }}
+            asLink={asLink}
+            {...periodic}
+          />
+          <ContinuousRewardsCard nodeAddress={nodeAddress} asLink={asLink} />
         </>
       )}
     </CardContent>
@@ -1060,8 +1090,8 @@ export default function NodeRewardsSummaryCard({
     return (
       <Card sx={sx}>
         <CardActionArea component={Link} to={`/node/${nodeAddressOrName}`}>
-          <SummaryCardHeader nodeAddress={nodeAddress} />
-          <SummaryCardContent nodeAddress={nodeAddress} size={size} />
+          <SummaryCardHeader asLink nodeAddress={nodeAddress} />
+          <SummaryCardContent asLink nodeAddress={nodeAddress} size={size} />
         </CardActionArea>
       </Card>
     );
