@@ -143,8 +143,10 @@ const MINIPOOL_COLS = [
     field: "status",
     headerName: "Status",
     width: 195,
-    valueGetter: ({ value, row: { upgraded } }) =>
-      !MinipoolStatusNameByValue[value]
+    valueGetter: ({ value, row: { upgraded, isFinalized } }) =>
+      value === MinipoolStatus.staking && isFinalized
+        ? "finalized"
+        : !MinipoolStatusNameByValue[value]
         ? ""
         : upgraded
         ? MinipoolStatusNameByValue[value]
@@ -187,13 +189,14 @@ function DistributeButton({
   upgraded,
 }) {
   let canWithdraw = useCanConnectedAccountWithdraw(nodeAddress);
+  // over 8 ETH you can only distribute and finalize the minipool.
   let hasTooHighBalance = balance.gt(ethers.utils.parseEther("8"));
-  let disabled = !upgraded || !canWithdraw || hasTooHighBalance; // over 8 ETH you cannot skim rewards.
+  let disabled = !upgraded || !canWithdraw;
   const prep = usePrepareContractWrite({
     address: minipoolAddress,
     abi: distributeBalanceInterface,
     functionName: "distributeBalance",
-    args: [true], // rewardsOnly
+    args: [!hasTooHighBalance], // rewardsOnly
     enabled: !disabled,
   });
   let [estimateGasAmount, setEstimateGasAmount] = useState(
@@ -206,12 +209,12 @@ function DistributeButton({
     signerOrProvider: provider,
   });
   useEffect(() => {
-    if (!mp || hasTooHighBalance) {
+    if (!mp) {
       return;
     }
     let cancelled = false;
     mp.estimateGas
-      .distributeBalance(true)
+      .distributeBalance(!hasTooHighBalance)
       .then((estimate) => !cancelled && setEstimateGasAmount(estimate))
       // .catch((err) => !cancelled && console.log("error estimating gas", err));
       .catch((ignore) => {});
@@ -247,7 +250,7 @@ function DistributeButton({
             },
           })}
         >
-          Distribute
+          {hasTooHighBalance ? "Finalize" : "Distribute"}
         </Button>
       </Box>
     </Tooltip>
