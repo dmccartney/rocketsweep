@@ -34,10 +34,12 @@ import {
   BNSortComparator,
   bnSum,
   delegateUpgradeEncoded,
+  distributeBalanceAndFinalizeEncoded,
   distributeBalanceEncoded,
   distributeEncoded,
   estimateClaimIntervalsGas,
   estimateDistributeConsensusBatchGas,
+  estimateFinalizeGas,
   estimateTipsMevGas,
   MinipoolStatus,
   safeAppUrl,
@@ -65,10 +67,9 @@ function ConsensusConfigurationCard({
   onBatchSize,
   ethThreshold,
   onEthThreshold,
-  minipoolCount,
+  distributableMinipoolCount,
   disabled = false,
   calculatedBatchAmount = ethers.constants.Zero,
-  calculatedMinipoolCount = 0,
 }) {
   return (
     <Grid
@@ -198,7 +199,7 @@ function ConsensusConfigurationCard({
                 onChange={(e) => onBatchSize(e.target.value)}
                 min={1}
                 step={1}
-                max={Math.min(200, minipoolCount)}
+                max={Math.min(200, distributableMinipoolCount)}
               />
             </Stack>
           </Grid>
@@ -395,6 +396,7 @@ function useSweeper({ nodeAddress }) {
     .filter(({ status }) => status === MinipoolStatus.staking)
     .filter(({ upgraded }) => upgraded)
     .filter(({ balance }) => balance.gt(ethers.constants.Zero))
+    .filter(({ balance }) => balance.lt(ethers.utils.parseEther("8")))
     .value();
   let [isDistributingConsensus, setDistributingConsensus] = useState(
     !!distributableMinipools.length
@@ -428,10 +430,28 @@ function useSweeper({ nodeAddress }) {
     [executionNodeTotal.toString()]
   );
 
+  // Finalizing Configuration
+  let finalizableMinipools = _.chain(minipools)
+    .filter(({ status }) => status === MinipoolStatus.staking)
+    .filter(({ upgraded }) => upgraded)
+    .filter(({ balance }) => balance.gt(ethers.constants.Zero))
+    .filter(({ balance }) => balance.gte(ethers.utils.parseEther("8")))
+    .value();
+  let [isFinalizing, setFinalizing] = useState(!!finalizableMinipools.length);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(
+    () => setFinalizing(!!finalizableMinipools.length),
+    [finalizableMinipools.length]
+  );
+  let finalizeAmount = bnSum(
+    (finalizableMinipools || []).map(({ nodeBalance }) => nodeBalance)
+  );
+
   let beforeGas = {
     intervalsEth: totalEth,
     tipsMevEth: executionNodeTotal,
     consensusEth: currentBatchAmount,
+    finalizeEth: finalizeAmount,
   };
   let callGas = ethers.BigNumber.from("21000");
 
@@ -442,12 +462,14 @@ function useSweeper({ nodeAddress }) {
     ),
     tipsMev: estimateTipsMevGas(),
     consensus: estimateDistributeConsensusBatchGas((currentBatch || []).length),
+    finalize: estimateFinalizeGas(finalizableMinipools.length),
   };
   let overall = {
     eth: bnSum([
       isClaimingInterval ? beforeGas.intervalsEth : ethers.constants.Zero,
       isDistributingTipsMev ? beforeGas.tipsMevEth : ethers.constants.Zero,
       isDistributingConsensus ? beforeGas.consensusEth : ethers.constants.Zero,
+      isFinalizing ? beforeGas.finalizeEth : ethers.constants.Zero,
     ]),
     rpl: isClaimingInterval
       ? totalRpl.sub(stakeAmountRpl)
@@ -456,6 +478,7 @@ function useSweeper({ nodeAddress }) {
       isClaimingInterval ? gas.intervals : ethers.constants.Zero,
       isDistributingTipsMev ? gas.tipsMev : ethers.constants.Zero,
       isDistributingConsensus ? gas.consensus : ethers.constants.Zero,
+      isFinalizing ? gas.finalize : ethers.constants.Zero,
     ]),
   };
   if (!overall.gas.isZero()) {
@@ -504,6 +527,16 @@ function useSweeper({ nodeAddress }) {
         }))
       );
     }
+    if (isFinalizing) {
+      txs = txs.concat(
+        finalizableMinipools.map(({ minipoolAddress }) => ({
+          operation: "0x00",
+          to: minipoolAddress,
+          value: "0",
+          data: distributeBalanceAndFinalizeEncoded,
+        }))
+      );
+    }
     return sdk.txs.send({
       txs,
     });
@@ -539,6 +572,12 @@ function useSweeper({ nodeAddress }) {
     setDistributingTipsMev,
     executionNodeTotal,
 
+    // Finalizing config
+    isFinalizing,
+    setFinalizing,
+    finalizableMinipools,
+    finalizeAmount,
+
     // Analysis
     beforeGas,
     gas,
@@ -562,12 +601,16 @@ function SweepCardContent({ sx, nodeAddress, sweeper }) {
     setBatchSize,
     ethThreshold,
     setEthThreshold,
-    minipools,
+    distributableMinipools,
     currentBatch,
     currentBatchAmount,
 
     isDistributingTipsMev,
     setDistributingTipsMev,
+
+    isFinalizing,
+    setFinalizing,
+    finalizableMinipools,
 
     beforeGas,
     gas,
@@ -781,7 +824,7 @@ function SweepCardContent({ sx, nodeAddress, sweeper }) {
               ethThreshold={ethThreshold}
               onBatchSize={setBatchSize}
               onEthThreshold={setEthThreshold}
-              minipoolCount={minipools.length}
+              distributableMinipoolCount={distributableMinipools?.length}
               calculatedMinipoolCount={currentBatch?.length || 0}
               calculatedBatchAmount={currentBatchAmount}
             />
@@ -810,6 +853,98 @@ function SweepCardContent({ sx, nodeAddress, sweeper }) {
                         }
                       />{" "}
                       minipools (skimming)
+                    </>
+                  )
+                }
+              />
+            </Stack>
+          }
+        />
+        <IconRow Icon={Add} />
+        <TransactionRow
+          lhs={
+            <Grid
+              sx={{ pt: 0, pr: 3 }}
+              container
+              rowSpacing={2}
+              columnSpacing={2}
+              alignItems="center"
+            >
+              <Grid item xs={5} sx={{ textAlign: "right" }}>
+                <Tooltip
+                  arrow
+                  sx={{ cursor: "help" }}
+                  title="Distribute and finalize your withdrawn validators. This will become available only when a withdrawal has been processed."
+                >
+                  <Stack
+                    direction={"row"}
+                    spacing={1}
+                    justifyContent="end"
+                    alignItems={"center"}
+                  >
+                    <HelpOutline fontSize="inherit" color="disabled" />
+                    <Typography color={"text.primary"} variant={"subtitle2"}>
+                      Finalize
+                    </Typography>
+                  </Stack>
+                </Tooltip>
+              </Grid>
+              <Grid item xs={7}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={isFinalizing}
+                      onChange={(e) => setFinalizing(e.target.checked)}
+                    />
+                  }
+                  color="text.secondary"
+                  slotProps={{
+                    typography: {
+                      variant: "caption",
+                      color: "text.secondary",
+                    },
+                  }}
+                  disableTypography
+                  label={
+                    <Stack spacing={0} direction="column">
+                      <CurrencyValue
+                        size="xsmall"
+                        value={beforeGas.finalizeEth}
+                        currency="eth"
+                      />
+                      <FormHelperText sx={{ m: 0 }}>
+                        {isFinalizing ? "Distributing" : "Not Distributing"}
+                      </FormHelperText>
+                    </Stack>
+                  }
+                />
+              </Grid>
+            </Grid>
+          }
+          rhs={
+            <Stack direction="column" sx={{ pl: 2, pr: 2 }} spacing={2}>
+              {!isFinalizing || !finalizableMinipools?.length ? null : (
+                <ReceiptsInfo
+                  amountEth={beforeGas.finalizeEth}
+                  amountGas={gas.finalize}
+                />
+              )}
+              <TransactionDescription
+                title={
+                  !isFinalizing || !finalizableMinipools?.length ? (
+                    "Don't finalize any minipools"
+                  ) : (
+                    <>
+                      Finalize and distribute{" "}
+                      <Chip
+                        size="small"
+                        label={
+                          !finalizableMinipools?.length
+                            ? "0"
+                            : finalizableMinipools?.length.toLocaleString()
+                        }
+                      />{" "}
+                      minipools
                     </>
                   )
                 }
@@ -891,6 +1026,7 @@ export default function SafeSweepCard({ sx, nodeAddress }) {
     isClaimingInterval,
     isDistributingTipsMev,
     isDistributingConsensus,
+    isFinalizing,
     totalRpl,
     totalEth,
     rewardIndexes,
@@ -899,6 +1035,8 @@ export default function SafeSweepCard({ sx, nodeAddress }) {
     currentBatch,
     currentBatchAmount,
     executionNodeTotal,
+    finalizableMinipools,
+    finalizeAmount,
     overall,
   } = sweeper;
   let withdrawalAddress = useNodeWithdrawalAddress(nodeAddress);
@@ -1033,7 +1171,7 @@ export default function SafeSweepCard({ sx, nodeAddress }) {
                               >
                                 {currentBatch?.length}
                               </Typography>{" "}
-                              minipool{currentBatch?.length === 1 ? "" : "s"}
+                              skimming
                             </Typography>
                           </Stack>
                         </Grid>
@@ -1046,6 +1184,42 @@ export default function SafeSweepCard({ sx, nodeAddress }) {
                             <CurrencyValue
                               size="xsmall"
                               value={currentBatchAmount}
+                              currency="eth"
+                              placeholder="0"
+                            />
+                          </Stack>
+                        </Grid>
+                      </>
+                    )}
+                    {!isFinalizing ? null : (
+                      <>
+                        <Grid item xs={4.5}>
+                          <Stack direction="row" justifyContent="flex-end">
+                            <Typography
+                              component="span"
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              <Typography
+                                component="span"
+                                variant="caption"
+                                color="text.primary"
+                              >
+                                {finalizableMinipools?.length}
+                              </Typography>{" "}
+                              finalizing
+                            </Typography>
+                          </Stack>
+                        </Grid>
+                        <Grid item xs={7.5}>
+                          <Stack
+                            direction="row"
+                            spacing={1}
+                            justifyContent="flex-start"
+                          >
+                            <CurrencyValue
+                              size="xsmall"
+                              value={finalizeAmount}
                               currency="eth"
                               placeholder="0"
                             />

@@ -288,6 +288,9 @@ function ContinuousRewardsCard({ nodeAddress }) {
     minipools,
   } = useNodeContinuousRewards({ nodeAddress });
   let [highlighted, setHighlighted] = useState("");
+  let stakingMpCount = minipools.filter(
+    ({ isFinalized }) => !isFinalized
+  ).length;
   return (
     <Card elevation={5}>
       <CardHeader
@@ -297,7 +300,7 @@ function ContinuousRewardsCard({ nodeAddress }) {
       <CardContent sx={{ pt: 0 }}>
         <CurrencyValue
           sx={{ mb: 2 }}
-          value={minipools.length && nodeTotal}
+          value={stakingMpCount && nodeTotal}
           size="medium"
           currency="eth"
         />
@@ -306,9 +309,7 @@ function ContinuousRewardsCard({ nodeAddress }) {
           <Chip
             component="span"
             size="small"
-            label={
-              minipools.length === 0 ? "-" : minipools.length.toLocaleString()
-            }
+            label={stakingMpCount === 0 ? "-" : stakingMpCount.toLocaleString()}
           />{" "}
           staking minipools
         </FormHelperText>

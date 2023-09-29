@@ -133,6 +133,18 @@ export function estimateDistributeConsensusBatchGas(batchSize) {
 }
 
 // This is derived from gas profiling analysis.
+export function estimateFinalizeGas(batchSize) {
+  if (batchSize === 0) {
+    return ethers.constants.Zero;
+  }
+  let count = ethers.BigNumber.from(batchSize);
+  return ethers.BigNumber.from(21000) // txn init
+    .add(count.mul(1000)) // call data
+    .add(count.mul(210000)) // typical distributeBalance + finalize call
+    .sub(count.mul(4800)); // typical gas refund
+}
+
+// This is derived from gas profiling analysis.
 export function estimateClaimIntervalsGas(intervalCount, isZeroRplStake) {
   if (intervalCount === 0) {
     return ethers.constants.Zero;
@@ -158,7 +170,7 @@ export const MinipoolStatus = {
   initialised: 0,
   prelaunch: 1,
   staking: 2,
-  withdrawable: 3,
+  withdrawable: 3, // no longer used
   dissolved: 4,
 };
 
@@ -176,6 +188,9 @@ export const distributeBalanceInterface = new ethers.utils.Interface([
 
 export const distributeBalanceEncoded =
   distributeBalanceInterface.encodeFunctionData("distributeBalance", [true]);
+
+export const distributeBalanceAndFinalizeEncoded =
+  distributeBalanceInterface.encodeFunctionData("distributeBalance", [false]);
 
 export const distributeInterface = new ethers.utils.Interface([
   {
