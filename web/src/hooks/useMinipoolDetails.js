@@ -18,7 +18,7 @@ export default function useMinipoolDetails(nodeAddress) {
   let mpDelegateInterface = new ethers.utils.Interface(
     contracts.RocketMinipoolDelegate.abi
   );
-  let loadingWindowMs = 15 * 1000;
+  let loadingWindowMs = 60 * 1000;
   let details = useQueries(
     minipoolAddresses.map((minipoolAddress, i) => ({
       queryKey: ["MinipoolDetails", minipoolAddress],
