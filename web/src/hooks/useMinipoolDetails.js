@@ -18,12 +18,24 @@ export default function useMinipoolDetails(nodeAddress) {
   let mpDelegateInterface = new ethers.utils.Interface(
     contracts.RocketMinipoolDelegate.abi
   );
-  let loadingWindowMs = 15 * 1000;
+
+  // For very large nodes we can't load all minipools at once without hitting rate limits.
+  // But most nodes are smaller and they can be loaded at once.
+  // So we aggressively load the first minipools for a node and then spread out the remainder.
+  // Thus, most nodes load right away and larger nodes load over a predictable loading window.
+
+  // Note: these numbers are experimentally derived and may need tweaking as the `queryFn` changes.
+  // Load this many minipools immediately without spreading out the load.
+  let loadingWindowBypassCount = 50;
+  // Spread out any remaining minipool loads over this-sized window of time.
+  let loadingWindowMs = 25 * 1000; // 25 seconds
+
   let details = useQueries(
     minipoolAddresses.map((minipoolAddress, i) => ({
       queryKey: ["MinipoolDetails", minipoolAddress],
       queryFn: async () => {
-        if (i > 50) {
+        // Spread out load for large nodes.
+        if (i > loadingWindowBypassCount) {
           await new Promise((resolve) =>
             setTimeout(resolve, loadingWindowMs * Math.random())
           );
@@ -33,14 +45,14 @@ export default function useMinipoolDetails(nodeAddress) {
           mpDelegateInterface,
           provider?.signer || provider
         );
-        let [version, status, isFinalized, balance, nodeRefundBalance] =
-          await Promise.all([
-            mp.version(),
-            mp.getStatus(),
-            mp.getFinalised(),
-            provider.getBalance(minipoolAddress),
-            mp.getNodeRefundBalance(),
-          ]);
+        // Note: we don't Promise.all these reads to be gentler on the rate-limit.
+        // TODO: issue a multi-read call instead.
+        let isFinalized = await mp.getFinalised();
+        let nodeRefundBalance = await mp.getNodeRefundBalance();
+        let version = await mp.version();
+        let status = await mp.getStatus();
+        let balance = await provider.getBalance(minipoolAddress);
+
         let balanceLessRefund = balance.sub(nodeRefundBalance);
         let calculatedNodeShare = ethers.constants.Zero;
         if (balanceLessRefund.gt(ethers.constants.Zero)) {
