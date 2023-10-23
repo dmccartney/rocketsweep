@@ -12,9 +12,9 @@ import WalletChip from "./WalletChip";
 import { BNSortComparator } from "../utils";
 import { ethers } from "ethers";
 import CurrencyValue from "./CurrencyValue";
-import { useState } from "react";
 import useRewardSnapshot from "../hooks/useRewardSnapshot";
 import { DataGrid } from "@mui/x-data-grid";
+import DataToolbar from "./DataToolbar";
 
 function ClaimIndicator({ isOngoing, rewardIndex, nodeAddress }) {
   let { data: isClaimed, isLoading } =
@@ -83,6 +83,7 @@ const INTERVAL_COLS = [
     field: "isClaimed",
     headerName: "Claimed",
     width: 150,
+    disableExport: true, // derived fields don't sort/export properly.
     sortable: false,
     renderCell: ({ row }) => {
       let { isOngoing, nodeAddress, rewardIndex } = row;
@@ -101,6 +102,7 @@ const INTERVAL_COLS = [
     headerName: "Smoothing Pool",
     width: 175,
     sortComparator: BNSortComparator,
+    valueFormatter: (params) => ethers.utils.formatEther(params.value || 0),
     valueGetter: ({ value }) => ethers.BigNumber.from(value || 0),
     renderCell: ({ value, row: { isOngoing } }) => (
       <Stack direction="row" spacing={1} alignItems="baseline">
@@ -124,6 +126,7 @@ const INTERVAL_COLS = [
     headerName: "Inflation",
     width: 175,
     sortComparator: BNSortComparator,
+    valueFormatter: (params) => ethers.utils.formatEther(params.value || 0),
     valueGetter: ({ row }) =>
       ethers.BigNumber.from(row.collateralRpl || 0).add(
         ethers.BigNumber.from(row.oracleDaoRpl || 0)
@@ -146,7 +149,6 @@ export default function IntervalRewardsTable({
   filter,
   filterAddress,
 }) {
-  let [pageSize, setPageSize] = useState(3);
   let snapshot = useRewardSnapshot({ rewardIndex });
   let { isOngoing, nodeRewards } = snapshot || {};
   let nodeAddresses = Object.keys(nodeRewards || {});
@@ -167,18 +169,26 @@ export default function IntervalRewardsTable({
     }));
   return (
     <div style={{ display: "flex", maxWidth }}>
-      <div style={{ flexGrow: 1 }}>
+      <div style={{ flexGrow: 1, width: "100%" }}>
         <DataGrid
           sx={{ width: "100%", minHeight: 240 }}
+          slots={{ toolbar: DataToolbar }}
+          slotProps={{
+            toolbar: {
+              fileName: `rocketsweep-interval-${rewardIndex}-rewards`,
+              isLoading: rows.length < 1,
+            },
+          }}
+          density="compact"
+          rowSelection={false}
           autoHeight
-          pageSize={pageSize}
-          onPageSizeChange={setPageSize}
           pagination
-          rowsPerPageOptions={[3, 10, 20, 50, 100]}
+          pageSizeOptions={[3, 10, 20, 50, 100]}
           rows={rows}
           getRowId={({ nodeAddress }) => nodeAddress}
           columns={INTERVAL_COLS}
           initialState={{
+            pagination: { paginationModel: { pageSize: 3 } },
             sorting: {
               sortModel: [
                 {

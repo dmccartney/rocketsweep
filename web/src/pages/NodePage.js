@@ -34,34 +34,26 @@ import useNodeFeeDistributorInfo from "../hooks/useNodeFeeDistributorInfo";
 import contracts from "../contracts";
 import RewardsHelpInfo from "../components/RewardsHelpInfo";
 
-function PeriodicRewardsHeaderCard({ sx }) {
+function PeriodicRewardsHeader({ sx }) {
   return (
-    <Grid sx={sx} rowSpacing={2} container alignItems="center">
-      <Grid item xs={12} md={4}>
-        <Stack direction="row" alignItems="center">
-          <EventRepeat
-            sx={{ ml: 2, mr: 2 }}
-            fontSize="medium"
-            color="disabled"
-          />
-          <Typography color="text.secondary" variant="subtitle2">
-            Periodic Rewards
-          </Typography>
-          <Tooltip title={<RewardsHelpInfo />}>
-            <IconButton
-              href="https://docs.rocketpool.net/guides/node/rewards.html"
-              sx={{ opacity: 0.5 }}
-              component="a"
-              target="_blank"
-              color="inherit"
-              size="small"
-            >
-              <Help fontSize="inherit" />
-            </IconButton>
-          </Tooltip>
-        </Stack>
-      </Grid>
-    </Grid>
+    <Stack direction="row" alignItems="center">
+      <EventRepeat sx={{ m: 1, mr: 2 }} fontSize="medium" color="disabled" />
+      <Typography color="text.primary" variant="subtitle2">
+        Periodic Rewards
+      </Typography>
+      <Tooltip title={<RewardsHelpInfo />}>
+        <IconButton
+          href="https://docs.rocketpool.net/guides/node/rewards.html"
+          sx={{ opacity: 0.5 }}
+          component="a"
+          target="_blank"
+          color="inherit"
+          size="small"
+        >
+          <Help fontSize="inherit" />
+        </IconButton>
+      </Tooltip>
+    </Stack>
   );
 }
 
@@ -172,22 +164,20 @@ function ClaimTipsMEVButton({ nodeAddress }) {
   );
 }
 
-function ContinuousRewardsHeaderCard({ sx, nodeAddress }) {
+function ContinuousRewardsHeader({ sx, nodeAddress }) {
   return (
     <Grid sx={sx} rowSpacing={2} container alignItems="center">
       <Grid item xs={12} md={4}>
         <Stack direction="row" alignItems="center">
           <AllInclusive
-            sx={{ ml: 2, mr: 2 }}
+            sx={{ m: 1, mr: 2 }}
             fontSize="medium"
             color="disabled"
           />
-          <Typography color="text.secondary" variant="subtitle2">
-            Continuous Rewards
-          </Typography>
+          <Typography variant="subtitle2">Continuous Rewards</Typography>
         </Stack>
       </Grid>
-      <Grid item sx={{ pl: 7 }} xs={12} md={8}>
+      <Grid item sx={{ pl: 6 }} xs={12} md={8}>
         <Stack direction="row" alignItems="center">
           <ClaimTipsMEVButton nodeAddress={nodeAddress} />
         </Stack>
@@ -216,19 +206,16 @@ export default function NodePage() {
           </Grid>
           <Grid key={"sweep-table-cards"} item xs={12} lg={8}>
             <SafeSweepCard sx={{ mb: 4 }} nodeAddress={nodeAddress} />
-            <PeriodicRewardsHeaderCard
-              sx={{ mb: 2 }}
-              nodeAddress={nodeAddress}
-            />
             <NodePeriodicRewardsTable
-              sx={{ mb: 5 }}
+              sx={{ mb: 5, border: 0 }}
               nodeAddress={nodeAddress}
+              header={<PeriodicRewardsHeader nodeAddress={nodeAddress} />}
             />
-            <ContinuousRewardsHeaderCard
-              sx={{ mb: 2 }}
+            <NodeContinuousRewardsTable
+              sx={{ border: 0 }}
               nodeAddress={nodeAddress}
+              header={<ContinuousRewardsHeader nodeAddress={nodeAddress} />}
             />
-            <NodeContinuousRewardsTable nodeAddress={nodeAddress} />
           </Grid>
         </Grid>
       )}

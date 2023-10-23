@@ -33,6 +33,8 @@ import GasInfoFooter from "./GasInfoFooter";
 import CurrencyValue from "./CurrencyValue";
 import useCanConnectedAccountWithdraw from "../hooks/useCanConnectedAccountWithdraw";
 import useGasPrice from "../hooks/useGasPrice";
+import DataToolbar from "./DataToolbar";
+import _ from "lodash";
 
 const MINIPOOL_COLS = [
   {
@@ -70,6 +72,7 @@ const MINIPOOL_COLS = [
     field: "distribute",
     headerName: "Skimming etc",
     width: 125,
+    disableExport: true,
     sortable: false,
     renderCell: ({ row }) => {
       let balance = ethers.BigNumber.from(row.balance || "0");
@@ -94,6 +97,7 @@ const MINIPOOL_COLS = [
     type: "number",
     width: 120,
     sortComparator: BNSortComparator,
+    valueFormatter: (params) => ethers.utils.formatEther(params.value || 0),
     valueGetter: ({ value, row }) =>
       ethers.BigNumber.from(
         row.status !== MinipoolStatus.staking ? "0" : value || "0"
@@ -111,6 +115,7 @@ const MINIPOOL_COLS = [
     type: "number",
     width: 120,
     sortComparator: BNSortComparator,
+    valueFormatter: (params) => ethers.utils.formatEther(params.value || 0),
     valueGetter: ({ value, row }) =>
       ethers.BigNumber.from(
         row.status !== MinipoolStatus.staking ? "0" : value || "0"
@@ -128,6 +133,7 @@ const MINIPOOL_COLS = [
     type: "number",
     width: 120,
     sortComparator: BNSortComparator,
+    valueFormatter: (params) => ethers.utils.formatEther(params.value || 0),
     valueGetter: ({ value, row }) =>
       ethers.BigNumber.from(
         row.status !== MinipoolStatus.staking ? "0" : value || "0"
@@ -257,25 +263,37 @@ function DistributeButton({
   );
 }
 
-export default function NodeContinuousRewardsTable({ sx, nodeAddress }) {
-  let [pageSize, setPageSize] = useState(5);
+export default function NodeContinuousRewardsTable({
+  sx,
+  nodeAddress,
+  header,
+}) {
   let minipools = useMinipoolDetails(nodeAddress);
   let columns = MINIPOOL_COLS;
   let maxWidth = columns.reduce((sum, { width }) => sum + width, 0);
   return (
     <div style={{ display: "flex", maxWidth }}>
-      <div style={{ flexGrow: 1 }}>
+      <div style={{ flexGrow: 1, width: "100%" }}>
         <DataGrid
           sx={{ ...sx }}
+          slots={{ toolbar: DataToolbar }}
+          slotProps={{
+            toolbar: {
+              header,
+              fileName: `rocketsweep-node-${nodeAddress}-continuous-rewards`,
+              isLoading: _.some(minipools, (mp) => mp.isLoading),
+            },
+          }}
+          density="compact"
+          rowSelection={false}
           autoHeight
-          pageSize={pageSize}
-          onPageSizeChange={setPageSize}
           pagination
-          rowsPerPageOptions={[5, 10, 20, 50, 100]}
+          pageSizeOptions={[3, 10, 20, 50, 100]}
           rows={minipools.map((mp) => ({ ...mp, nodeAddress }))}
           getRowId={({ minipoolAddress }) => minipoolAddress}
           columns={columns}
           initialState={{
+            pagination: { paginationModel: { pageSize: 3 } },
             sorting: {
               sortModel: [
                 {

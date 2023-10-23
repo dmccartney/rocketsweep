@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { DataGrid } from "@mui/x-data-grid";
 import { Button, Stack, Typography } from "@mui/material";
 import { Link } from "react-router-dom";
@@ -10,6 +9,8 @@ import useNodeFinalizedRewardSnapshots from "../hooks/useNodeFinalizedRewardSnap
 import useNodePendingRewardSnapshot from "../hooks/useNodePendingRewardSnapshot";
 import useNodeOngoingRewardSnapshot from "../hooks/useNodeOngoingRewardSnapshot";
 import ClaimButtonGroup from "./ClaimButtonGroup";
+import DataToolbar from "./DataToolbar";
+import _ from "lodash";
 
 const INTERVAL_COLS = [
   {
@@ -23,11 +24,17 @@ const INTERVAL_COLS = [
       return (
         <Button
           component={Link}
+          sx={{ width: 150 }}
           size="small"
           variant="inherit"
           to={`/interval/${rewardIndex}`}
         >
-          <Stack direction="row" alignItems="baseline">
+          <Stack
+            sx={{ width: "100%" }}
+            direction="row"
+            alignItems="baseline"
+            justifyContent="flex-start"
+          >
             #{rewardIndex}
             <Typography sx={{ pl: 1 }} variant="caption" color="text.secondary">
               {`${when?.fromNow() || "ongoing"}`}
@@ -39,9 +46,17 @@ const INTERVAL_COLS = [
   },
   {
     field: "isClaimed",
-    headerName: "",
+    headerName: " ",
     width: 245,
     sortable: false,
+    valueFormatter: (params) => {
+      let { endTime, type } = params.api.getRow(params.id);
+      let when = endTime ? moment(1000 * endTime) : null;
+      if (type === "ongoing") {
+        return "ongoing";
+      }
+      return when?.format("YYYY-MM-DD") || "";
+    },
     renderCell: ({ value, row }) => {
       let {
         type,
@@ -73,6 +88,7 @@ const INTERVAL_COLS = [
     width: 150,
     sortComparator: BNSortComparator,
     valueGetter: ({ value }) => ethers.BigNumber.from(value || 0),
+    valueFormatter: (params) => ethers.utils.formatEther(params.value || 0),
     renderCell: ({ value, row: { type } }) => (
       <Stack direction="row" spacing={1} alignItems="baseline">
         {type === "ongoing" && (
@@ -100,6 +116,7 @@ const INTERVAL_COLS = [
         ethers.BigNumber.from(oracleDaoRpl || "0")
       );
     },
+    valueFormatter: (params) => ethers.utils.formatEther(params.value || 0),
     renderCell: ({ value, row: { type } }) => (
       <Stack direction="row" spacing={1} alignItems="baseline">
         {type === "ongoing" && (
@@ -113,8 +130,7 @@ const INTERVAL_COLS = [
   },
 ];
 
-export default function NodePeriodicRewardsTable({ sx, nodeAddress }) {
-  let [pageSize, setPageSize] = useState(3);
+export default function NodePeriodicRewardsTable({ sx, nodeAddress, header }) {
   let finalized = useNodeFinalizedRewardSnapshots({ nodeAddress });
   let pending = useNodePendingRewardSnapshot({ nodeAddress });
   let ongoing = useNodeOngoingRewardSnapshot({ nodeAddress });
@@ -129,20 +145,29 @@ export default function NodePeriodicRewardsTable({ sx, nodeAddress }) {
     .concat(finalized);
   return (
     <div style={{ display: "flex", maxWidth }}>
-      <div style={{ flexGrow: 1 }}>
+      <div style={{ flexGrow: 1, width: "100%" }}>
         <DataGrid
           sx={{ ...sx }}
+          slots={{ toolbar: DataToolbar }}
+          slotProps={{
+            toolbar: {
+              header,
+              fileName: `rocketsweep-node-${nodeAddress}-periodic-rewards`,
+              isLoading: _.some(rows, (row) => row.isLoading),
+            },
+          }}
+          density="compact"
+          rowSelection={false}
           autoHeight
-          pageSize={pageSize}
-          onPageSizeChange={setPageSize}
           pagination
-          rowsPerPageOptions={[3, 10, 20, 50, 100]}
+          pageSizeOptions={[3, 10, 20, 50, 100]}
           rows={rows}
           getRowId={({ type, rewardIndex }) =>
             type === "local" ? "local" : rewardIndex
           }
           columns={columns}
           initialState={{
+            pagination: { paginationModel: { pageSize: 3 } },
             sorting: {
               sortModel: [
                 {
