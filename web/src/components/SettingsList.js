@@ -12,7 +12,9 @@ import {
   Stack,
   TextField,
   Tooltip,
+  Typography,
 } from "@mui/material";
+import { Help } from "@mui/icons-material";
 
 export default function SettingsList() {
   let { isConnected } = useAccount();
@@ -101,7 +103,18 @@ export default function SettingsList() {
         </Grid>
       </Grid>
       <ListItem>
-        <ListItemText primary="Ongoing Rewards" />
+        <ListItemText
+          primary={
+            <>
+              Ongoing Rewards
+              <Tooltip title="To preview the ongoing interval’s rewards, we rely on an off-chain source to calculate an estimate of the rewards tree.">
+                <Typography component="span" color="text.secondary">
+                  <Help sx={{ ml: 1 }} fontSize="small" />
+                </Typography>
+              </Tooltip>
+            </>
+          }
+        />
         <Tooltip arrow title="TODO: make Ongoing Rewards configurable">
           <Stack direction="column" alignItems="flex-end">
             <ButtonGroup disabled size="small">

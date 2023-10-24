@@ -1,5 +1,5 @@
 import { DataGrid } from "@mui/x-data-grid";
-import { Button, Stack, Typography } from "@mui/material";
+import { Button, Stack, Tooltip, Typography } from "@mui/material";
 import { Link } from "react-router-dom";
 import { ethers } from "ethers";
 import moment from "moment";
@@ -90,19 +90,32 @@ const INTERVAL_COLS = [
     valueGetter: ({ value }) => ethers.BigNumber.from(value || 0),
     valueFormatter: (params) => ethers.utils.formatEther(params.value || 0),
     renderCell: ({ value, row: { type } }) => (
-      <Stack direction="row" spacing={1} alignItems="baseline">
-        {type === "ongoing" && (
-          <Typography component="span" variant="inherit" color="text.secondary">
-            &ge;
-          </Typography>
-        )}
-        <CurrencyValue
-          size="small"
-          currency="eth"
-          placeholder="0"
-          value={value}
-        />
-      </Stack>
+      <Tooltip
+        sx={{ cursor: "help" }}
+        title={
+          type === "ongoing"
+            ? "This is the node’s share of the current smoothing pool balance. It will continue to grow until the end of the interval."
+            : "This is the node’s share of the smoothing pool for the interval."
+        }
+      >
+        <Stack direction="row" spacing={1} alignItems="baseline">
+          {type === "ongoing" && (
+            <Typography
+              component="span"
+              variant="inherit"
+              color="text.secondary"
+            >
+              &ge;
+            </Typography>
+          )}
+          <CurrencyValue
+            size="small"
+            currency="eth"
+            placeholder="0"
+            value={value}
+          />
+        </Stack>
+      </Tooltip>
     ),
   },
   {
@@ -118,14 +131,27 @@ const INTERVAL_COLS = [
     },
     valueFormatter: (params) => ethers.utils.formatEther(params.value || 0),
     renderCell: ({ value, row: { type } }) => (
-      <Stack direction="row" spacing={1} alignItems="baseline">
-        {type === "ongoing" && (
-          <Typography component="span" variant="inherit" color="text.secondary">
-            &ge;
-          </Typography>
-        )}
-        <CurrencyValue size="small" currency="rpl" value={value} />
-      </Stack>
+      <Tooltip
+        sx={{ cursor: "help" }}
+        title={
+          type === "ongoing"
+            ? "This is the node’s share of RPL inflation for the interval. It will continue to grow until the end of the interval. At the end of the interval, if the node’s RPL stake is below 10% of borrowed ETH, then they receive no inflation RPL and this value becomes zero."
+            : "This is the node’s share of RPL inflation for the interval."
+        }
+      >
+        <Stack direction="row" spacing={1} alignItems="baseline">
+          {type === "ongoing" && (
+            <Typography
+              component="span"
+              variant="inherit"
+              color="text.secondary"
+            >
+              &ge;
+            </Typography>
+          )}
+          <CurrencyValue size="small" currency="rpl" value={value} />
+        </Stack>
+      </Tooltip>
     ),
   },
 ];
