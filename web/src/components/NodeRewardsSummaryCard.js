@@ -54,6 +54,8 @@ import RewardsHelpInfo from "./RewardsHelpInfo";
 import useMinipoolDetails from "../hooks/useMinipoolDetails";
 
 function SummaryCardHeader({ asLink, nodeAddress }) {
+  const [highlighted, setHighlighted] = useState("");
+  const theme = useTheme();
   const minipools = useMinipoolDetails(nodeAddress);
   const rplEthPrice = useRplEthPrice();
   const { data: details } = useNodeDetails({ nodeAddress });
@@ -92,33 +94,85 @@ function SummaryCardHeader({ asLink, nodeAddress }) {
         />
       }
       action={
-        <Stack sx={{}} direction="column">
+        <Stack sx={{ lineHeight: 0 }} direction="column">
           <Stack sx={{ mr: 1 }} spacing={2} direction="row" alignItems="center">
-            <Stack sx={{ pt: 1 }} direction="column" alignItems="flex-end">
-              <Box sx={{ mt: 0 }}>
-                <Chip
-                  size="small"
-                  label={
-                    <Typography variant="caption">
-                      {depositEthText} + {rplStakeEthText}
-                    </Typography>
-                  }
-                />
-              </Box>
-              <FormHelperText sx={{ mt: 0.25 }}>
-                tvl
-                <Typography
-                  component={"span"}
-                  variant="eth"
-                  sx={{ pl: 0.5 }}
-                  color={(theme) => theme.palette.eth.light}
-                >
-                  {"ETH"}
-                </Typography>
-              </FormHelperText>
-            </Stack>
             <Tooltip
               arrow
+              title="ETH deposited into minipools + ETH value of staked RPL"
+              onOpen={() => setHighlighted("depositEth")}
+              onClose={() => setHighlighted("")}
+            >
+              <Stack
+                sx={{
+                  pt: 1,
+                  opacity:
+                    !highlighted || highlighted === "depositEth" ? 1 : 0.25,
+                }}
+                spacing={0}
+                direction="column"
+                alignItems="flex-end"
+              >
+                <Box sx={{ mt: 0 }}>
+                  <Chip
+                    size="small"
+                    label={
+                      <Typography variant="caption">
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            opacity:
+                              !highlighted || highlighted === "depositEth"
+                                ? 1
+                                : 0.25,
+                          }}
+                          color="inherit"
+                          component="span"
+                        >
+                          {depositEthText}
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          sx={{ opacity: !highlighted ? 1 : 0.25 }}
+                          color="inherit"
+                          component="span"
+                        >
+                          {" + "}
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            opacity:
+                              !highlighted || highlighted === "rplStakeEth"
+                                ? 1
+                                : 0.25,
+                            textEmphasisColor: "red",
+                          }}
+                          color="inherit"
+                          component="span"
+                        >
+                          {rplStakeEthText}
+                        </Typography>
+                      </Typography>
+                    }
+                  />
+                </Box>
+                <FormHelperText sx={{ mt: 0.25 }}>
+                  tvl
+                  <Typography
+                    component={"span"}
+                    variant="eth"
+                    sx={{ pl: 0.5 }}
+                    color={(theme) => theme.palette.eth.light}
+                  >
+                    {"ETH"}
+                  </Typography>
+                </FormHelperText>
+              </Stack>
+            </Tooltip>
+            <Tooltip
+              arrow
+              onOpen={() => setHighlighted("rplStakeEth")}
+              onClose={() => setHighlighted("")}
               slotProps={{
                 tooltip: {
                   sx: { boxShadow: 4, bgcolor: "background.paper" },
@@ -134,7 +188,12 @@ function SummaryCardHeader({ asLink, nodeAddress }) {
               }
             >
               <Stack
-                sx={{ pt: 1, cursor: "help" }}
+                sx={{
+                  pt: 1,
+                  cursor: "help",
+                  opacity:
+                    !highlighted || highlighted === "rplStakeEth" ? 1 : 0.25,
+                }}
                 direction="column"
                 alignItems="flex-end"
               >
@@ -177,6 +236,37 @@ function SummaryCardHeader({ asLink, nodeAddress }) {
               </Stack>
             </Tooltip>
           </Stack>
+          {depositEth.isZero() && rplStakeEth.isZero() ? null : (
+            <Box sx={{}}>
+              <ResponsiveContainer height={4} width="100%">
+                <Treemap
+                  colorPanel={[
+                    theme.palette.eth.light,
+                    theme.palette.rpl.light,
+                  ]}
+                  data={[
+                    {
+                      name: "depositEth",
+                      value: Number(ethers.utils.formatUnits(depositEth)),
+                      color: theme.palette.eth.main,
+                    },
+                    {
+                      name: "rplStakeEth",
+                      value: Number(ethers.utils.formatUnits(rplStakeEth)),
+                      color: theme.palette.rpl.main,
+                    },
+                  ]}
+                  content={
+                    <ContinuousTreemapContent
+                      highlighted={highlighted}
+                      onHoveredName={(name) => setHighlighted(name)}
+                    />
+                  }
+                  isAnimationActive={false}
+                />
+              </ResponsiveContainer>
+            </Box>
+          )}
         </Stack>
       }
     />
