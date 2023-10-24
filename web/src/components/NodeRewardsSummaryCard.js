@@ -51,17 +51,33 @@ import useNodeRplStatus from "../hooks/useNodeRplStatus";
 import useRplEthPrice from "../hooks/useRplEthPrice";
 import { useState } from "react";
 import RewardsHelpInfo from "./RewardsHelpInfo";
+import useMinipoolDetails from "../hooks/useMinipoolDetails";
 
 function SummaryCardHeader({ asLink, nodeAddress }) {
-  const continuous = useNodeContinuousRewards({ nodeAddress });
+  const minipools = useMinipoolDetails(nodeAddress);
+  const rplEthPrice = useRplEthPrice();
   const { data: details } = useNodeDetails({ nodeAddress });
   let { rplStake } = details || {
     rplStake: ethers.constants.Zero,
   };
-  // rplStake = rplStake.div(ethers.BigNumber.from(2));
   const rplStatus = useNodeRplStatus({ nodeAddress });
+  const depositEth = bnSum(
+    (minipools || [])
+      .filter((mp) => !mp.isFinalized)
+      .map((mp) => mp.nodeDepositBalance)
+  );
+  const rplStakeEth = rplStake
+    ?.mul(rplEthPrice)
+    .div(ethers.constants.WeiPerEther);
+
   let rplStakeText = trimValue(ethers.utils.formatUnits(rplStake), {
     maxDecimals: 0,
+  });
+  let depositEthText = trimValue(ethers.utils.formatUnits(depositEth), {
+    maxDecimals: 0,
+  });
+  let rplStakeEthText = trimValue(ethers.utils.formatUnits(rplStakeEth), {
+    maxDecimals: 1,
   });
   return (
     <CardHeader
@@ -84,12 +100,22 @@ function SummaryCardHeader({ asLink, nodeAddress }) {
                   size="small"
                   label={
                     <Typography variant="caption">
-                      {continuous?.minipoolCount}
+                      {depositEthText} + {rplStakeEthText}
                     </Typography>
                   }
                 />
               </Box>
-              <FormHelperText sx={{ mt: 0.25 }}>minipools</FormHelperText>
+              <FormHelperText sx={{ mt: 0.25 }}>
+                tvl
+                <Typography
+                  component={"span"}
+                  variant="eth"
+                  sx={{ pl: 0.5 }}
+                  color={(theme) => theme.palette.eth.light}
+                >
+                  {"ETH"}
+                </Typography>
+              </FormHelperText>
             </Stack>
             <Tooltip
               arrow
