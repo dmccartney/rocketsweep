@@ -51,6 +51,7 @@ export default function useMinipoolDetails(nodeAddress) {
         let nodeRefundBalance = await mp.getNodeRefundBalance();
         let version = await mp.version();
         let status = await mp.getStatus();
+        let nodeDepositBalance = await mp.getNodeDepositBalance();
         let balance = await provider.getBalance(minipoolAddress);
 
         let balanceLessRefund = balance.sub(nodeRefundBalance);
@@ -63,6 +64,7 @@ export default function useMinipoolDetails(nodeAddress) {
         );
         let protocolBalance = balance.sub(nodeBalance);
         balance = balance.toHexString();
+        nodeDepositBalance = nodeDepositBalance.toHexString();
         nodeRefundBalance = nodeRefundBalance.toHexString();
         calculatedNodeShare = calculatedNodeShare.toHexString();
         nodeBalance = nodeBalance.toHexString();
@@ -71,6 +73,7 @@ export default function useMinipoolDetails(nodeAddress) {
         return {
           minipoolAddress,
           balance,
+          nodeDepositBalance,
           nodeRefundBalance,
           calculatedNodeShare,
           nodeBalance,
