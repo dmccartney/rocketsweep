@@ -651,16 +651,18 @@ function RplPriceRangeAxis({ sx, nodeAddress }) {
 
 function RplStakeEthRangeAxis({ sx, nodeAddress }) {
   const theme = useTheme();
+  const minipools = useMinipoolDetails(nodeAddress);
   const { data: details } = useNodeDetails({ nodeAddress });
   let rplStatus = useNodeRplStatus({ nodeAddress });
-  let { ethMatched, minipoolCount } = details || {
+  let { ethMatched } = details || {
     ethMatched: ethers.constants.Zero,
     minipoolCount: ethers.constants.Zero,
   };
-  const ethSupplied = minipoolCount
-    .mul(32)
-    .mul(ethers.constants.WeiPerEther)
-    .sub(ethMatched);
+  const ethSupplied = bnSum(
+    (minipools || [])
+      .filter((mp) => !mp.isFinalized)
+      .map((mp) => mp.nodeDepositBalance)
+  );
   return (
     <>
       <Stack
