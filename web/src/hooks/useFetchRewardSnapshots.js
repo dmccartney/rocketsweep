@@ -13,8 +13,8 @@ export default function useFetchRewardSnapshots({
     ),
     {
       enabled: !!ipfsBase,
-      cacheTime: Math.Infinite,
-      staleTime: Math.Infinite,
+      cacheTime: Infinity,
+      staleTime: Infinity,
     }
   );
   return (snapshots || []).map((snapshot, i) => ({

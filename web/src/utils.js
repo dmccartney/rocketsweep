@@ -145,6 +145,12 @@ export function estimateFinalizeGas(batchSize) {
 }
 
 // This is derived from gas profiling analysis.
+export function estimateWithdrawRplGas() {
+  return ethers.BigNumber.from(21000) // txn init
+    .add(150000); // typical call
+}
+
+// This is derived from gas profiling analysis.
 export function estimateClaimIntervalsGas(intervalCount, isZeroRplStake) {
   if (intervalCount === 0) {
     return ethers.constants.Zero;

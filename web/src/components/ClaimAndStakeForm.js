@@ -49,11 +49,7 @@ export function ClaimButtonTooltip({
             currency="eth"
             placeholder="0"
           />
-          <CurrencyValue
-            value={rplTotal.sub(stakeAmountRpl)}
-            currency="rpl"
-            placeholder="0"
-          />
+          <CurrencyValue value={rplTotal} currency="rpl" placeholder="0" />
         </Stack>
         <FormHelperText sx={{ m: 0 }}>
           approximate receipts (after gas)
@@ -183,8 +179,7 @@ export default function ClaimAndStakeForm({
         <ClaimButtonTooltip
           gasAmount={gasAmount}
           ethTotal={ethTotal}
-          rplTotal={rplTotal}
-          stakeAmountRpl={stakeAmountRpl}
+          rplTotal={rplTotal.sub(stakeAmountRpl)}
         />
       }
     >

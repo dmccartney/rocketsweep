@@ -9,8 +9,8 @@ export default function useWithdrawableNodeAddresses(address) {
       from: 0,
       to: "latest",
       enabled: !!address,
-      cacheTime: Math.Infinity,
-      staleTime: Math.Infinity,
+      cacheTime: Infinity,
+      staleTime: Infinity,
     });
   let rocketStorageK = useK.RocketStorage.Raw();
   let rocketNodeManagerK = useK.RocketNodeManager.Raw();

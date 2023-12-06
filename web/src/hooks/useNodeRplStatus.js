@@ -8,8 +8,7 @@ export default function useNodeRplStatus({ nodeAddress }) {
     minimumRPLStake: ethers.constants.Zero,
     maximumRPLStake: ethers.constants.Zero,
   };
-  // rplStake = rplStake.div(ethers.BigNumber.from(2));
-  return !rplStake
+  let rplStatus = !rplStake
     ? "effective"
     : rplStake?.lte(minimumRPLStake)
     ? "under"
@@ -18,4 +17,17 @@ export default function useNodeRplStatus({ nodeAddress }) {
     : rplStake?.gt(maximumRPLStake)
     ? "over"
     : "effective";
+  let rplOver =
+    rplStatus === "over"
+      ? rplStake.sub(maximumRPLStake)
+      : ethers.constants.Zero;
+  let rplUnder =
+    rplStatus === "under"
+      ? minimumRPLStake.sub(rplStake)
+      : ethers.constants.Zero;
+  return {
+    rplStatus,
+    rplOver,
+    rplUnder,
+  };
 }

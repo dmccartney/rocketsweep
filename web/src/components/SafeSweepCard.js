@@ -41,6 +41,7 @@ import {
   estimateDistributeConsensusBatchGas,
   estimateFinalizeGas,
   estimateTipsMevGas,
+  estimateWithdrawRplGas,
   MinipoolStatus,
   safeAppUrl,
 } from "../utils";
@@ -58,6 +59,7 @@ import useNodeFinalizedRewardSnapshots from "../hooks/useNodeFinalizedRewardSnap
 import contracts from "../contracts";
 import useNodeDetails from "../hooks/useNodeDetails";
 import { ClaimButtonTooltip } from "./ClaimAndStakeForm";
+import useNodeRplStatus from "../hooks/useNodeRplStatus";
 
 function ConsensusConfigurationCard({
   sx,
@@ -361,6 +363,8 @@ function SafeAlert({ sx, nodeAddress }) {
 
 function useSweeper({ nodeAddress }) {
   let { data: details } = useNodeDetails({ nodeAddress });
+  let { rplOver } = useNodeRplStatus({ nodeAddress });
+
   let { feeDistributorAddress } = details || {};
 
   // Intervals configuration
@@ -447,6 +451,14 @@ function useSweeper({ nodeAddress }) {
     (finalizableMinipools || []).map(({ nodeBalance }) => nodeBalance)
   );
 
+  let [isWithdrawingRpl, setIsWithdrawingRpl] = useState(rplOver.gt(0));
+  // If we get an updated `rplOver` later, we want to use it as the default.
+  useEffect(
+    () => setIsWithdrawingRpl(rplOver.gt(0)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [rplOver?.toString()]
+  );
+
   let beforeGas = {
     intervalsEth: totalEth,
     tipsMevEth: executionNodeTotal,
@@ -463,6 +475,7 @@ function useSweeper({ nodeAddress }) {
     tipsMev: estimateTipsMevGas(),
     consensus: estimateDistributeConsensusBatchGas((currentBatch || []).length),
     finalize: estimateFinalizeGas(finalizableMinipools.length),
+    withdrawRpl: estimateWithdrawRplGas(),
   };
   let overall = {
     eth: bnSum([
@@ -471,14 +484,16 @@ function useSweeper({ nodeAddress }) {
       isDistributingConsensus ? beforeGas.consensusEth : ethers.constants.Zero,
       isFinalizing ? beforeGas.finalizeEth : ethers.constants.Zero,
     ]),
-    rpl: isClaimingInterval
-      ? totalRpl.sub(stakeAmountRpl)
-      : ethers.constants.Zero,
+    rpl: bnSum([
+      isClaimingInterval ? totalRpl.sub(stakeAmountRpl) : ethers.constants.Zero,
+      isWithdrawingRpl ? rplOver : ethers.constants.Zero,
+    ]),
     gas: bnSum([
       isClaimingInterval ? gas.intervals : ethers.constants.Zero,
       isDistributingTipsMev ? gas.tipsMev : ethers.constants.Zero,
       isDistributingConsensus ? gas.consensus : ethers.constants.Zero,
       isFinalizing ? gas.finalize : ethers.constants.Zero,
+      isWithdrawingRpl ? gas.withdrawRpl : ethers.constants.Zero,
     ]),
   };
   if (!overall.gas.isZero()) {
@@ -537,6 +552,18 @@ function useSweeper({ nodeAddress }) {
         }))
       );
     }
+    if (isWithdrawingRpl) {
+      txs = txs.concat([
+        {
+          operation: "0x00",
+          to: contracts.RocketNodeStaking.address,
+          value: "0",
+          data: new ethers.utils.Interface(
+            contracts.RocketNodeStaking.abi
+          ).encodeFunctionData("withdrawRPL", [rplOver]),
+        },
+      ]);
+    }
     return sdk.txs.send({
       txs,
     });
@@ -578,6 +605,11 @@ function useSweeper({ nodeAddress }) {
     finalizableMinipools,
     finalizeAmount,
 
+    // Excess RPL config
+    isWithdrawingRpl,
+    setIsWithdrawingRpl,
+    rplOver,
+
     // Analysis
     beforeGas,
     gas,
@@ -611,6 +643,10 @@ function SweepCardContent({ sx, nodeAddress, sweeper }) {
     isFinalizing,
     setFinalizing,
     finalizableMinipools,
+
+    isWithdrawingRpl,
+    setIsWithdrawingRpl,
+    rplOver,
 
     beforeGas,
     gas,
@@ -952,6 +988,82 @@ function SweepCardContent({ sx, nodeAddress, sweeper }) {
             </Stack>
           }
         />
+        <IconRow Icon={Add} />
+        <TransactionRow
+          lhs={
+            <Grid
+              sx={{ pt: 0, pr: 3 }}
+              container
+              rowSpacing={2}
+              columnSpacing={2}
+              alignItems="center"
+            >
+              <Grid item xs={5} sx={{ textAlign: "right" }}>
+                <Tooltip
+                  arrow
+                  sx={{ cursor: "help" }}
+                  title="Withdraw your staked RPL beyond the maximum effective stake."
+                >
+                  <Stack
+                    direction={"row"}
+                    spacing={1}
+                    justifyContent="end"
+                    alignItems={"center"}
+                  >
+                    <HelpOutline fontSize="inherit" color="disabled" />
+                    <Typography color={"text.primary"} variant={"subtitle2"}>
+                      Excess RPL
+                    </Typography>
+                  </Stack>
+                </Tooltip>
+              </Grid>
+              <Grid item xs={7}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={isWithdrawingRpl}
+                      onChange={(e) => setIsWithdrawingRpl(e.target.checked)}
+                    />
+                  }
+                  color="text.secondary"
+                  slotProps={{
+                    typography: {
+                      variant: "caption",
+                      color: "text.secondary",
+                    },
+                  }}
+                  disableTypography
+                  label={
+                    <Stack spacing={0} direction="column">
+                      <CurrencyValue
+                        size="xsmall"
+                        value={rplOver}
+                        currency="rpl"
+                      />
+                      <FormHelperText sx={{ m: 0 }}>
+                        {isWithdrawingRpl ? "Withdrawing" : "Not Withdrawing"}
+                      </FormHelperText>
+                    </Stack>
+                  }
+                />
+              </Grid>
+            </Grid>
+          }
+          rhs={
+            <Stack direction="column" sx={{ pl: 2, pr: 2 }} spacing={2}>
+              {!isWithdrawingRpl ? null : (
+                <ReceiptsInfo amountRpl={rplOver} amountGas={gas.withdrawRpl} />
+              )}
+              <TransactionDescription
+                title={
+                  !isWithdrawingRpl
+                    ? "Don't withdraw excess RPL"
+                    : "Withdraw excess RPL"
+                }
+              />
+            </Stack>
+          }
+        />
         <IconRow
           Icon={Merge}
           iconProps={{
@@ -1027,6 +1139,8 @@ export default function SafeSweepCard({ sx, nodeAddress }) {
     isDistributingTipsMev,
     isDistributingConsensus,
     isFinalizing,
+    isWithdrawingRpl,
+    rplOver,
     totalRpl,
     totalEth,
     rewardIndexes,
@@ -1077,7 +1191,7 @@ export default function SafeSweepCard({ sx, nodeAddress }) {
               <ClaimButtonTooltip
                 gasAmount={overall.gas}
                 ethTotal={overall.eth}
-                rplTotal={isClaimingInterval ? totalRpl : ethers.constants.Zero}
+                rplTotal={overall.rpl}
                 stakeAmountRpl={
                   isClaimingInterval ? stakeAmountRpl : ethers.constants.Zero
                 }
@@ -1227,6 +1341,35 @@ export default function SafeSweepCard({ sx, nodeAddress }) {
                         </Grid>
                       </>
                     )}
+                    {!isWithdrawingRpl ? null : (
+                      <>
+                        <Grid item xs={4.5}>
+                          <Stack direction="row" justifyContent="flex-end">
+                            <Typography
+                              component="span"
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              excess RPL
+                            </Typography>
+                          </Stack>
+                        </Grid>
+                        <Grid item xs={7.5}>
+                          <Stack
+                            direction="row"
+                            spacing={1}
+                            justifyContent="flex-start"
+                          >
+                            <CurrencyValue
+                              size="xsmall"
+                              value={rplOver}
+                              currency="rpl"
+                              placeholder="0"
+                            />
+                          </Stack>
+                        </Grid>
+                      </>
+                    )}
                   </Grid>
                 </Stack>
               </ClaimButtonTooltip>
@@ -1267,12 +1410,21 @@ export default function SafeSweepCard({ sx, nodeAddress }) {
               color={color}
               disabled={!canWithdraw}
               endIcon={
-                <CurrencyValue
-                  value={overall.eth}
-                  size="xsmall"
-                  currency="eth"
-                  placeholder="0"
-                />
+                <>
+                  <CurrencyValue
+                    value={overall.eth}
+                    size="xsmall"
+                    currency="eth"
+                    placeholder="0"
+                  />
+                  <CurrencyValue
+                    sx={{ ml: 1 }}
+                    value={overall.rpl}
+                    size="xsmall"
+                    currency="rpl"
+                    placeholder="0"
+                  />
+                </>
               }
             >
               Sweep

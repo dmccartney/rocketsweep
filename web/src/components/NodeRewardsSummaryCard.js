@@ -62,7 +62,7 @@ function SummaryCardHeader({ asLink, nodeAddress }) {
   let { rplStake } = details || {
     rplStake: ethers.constants.Zero,
   };
-  const rplStatus = useNodeRplStatus({ nodeAddress });
+  const { rplStatus } = useNodeRplStatus({ nodeAddress });
   const depositEth = bnSum(
     (minipools || [])
       .filter((mp) => !mp.isFinalized)
@@ -653,7 +653,7 @@ function RplStakeEthRangeAxis({ sx, nodeAddress }) {
   const theme = useTheme();
   const minipools = useMinipoolDetails(nodeAddress);
   const { data: details } = useNodeDetails({ nodeAddress });
-  let rplStatus = useNodeRplStatus({ nodeAddress });
+  let { rplStatus } = useNodeRplStatus({ nodeAddress });
   let { ethMatched } = details || {
     ethMatched: ethers.constants.Zero,
     minipoolCount: ethers.constants.Zero,
@@ -785,7 +785,7 @@ function RplStakeChart({ sx, nodeAddress }) {
   const theme = useTheme();
   const { data: details } = useNodeDetails({ nodeAddress });
   const rplEthPrice = useRplEthPrice();
-  let rplStatus = useNodeRplStatus({ nodeAddress });
+  let { rplStatus } = useNodeRplStatus({ nodeAddress });
   let { rplStake, minimumRPLStake, maximumRPLStake } = details || {
     rplStake: ethers.constants.Zero,
     minimumRPLStake: ethers.constants.Zero,
