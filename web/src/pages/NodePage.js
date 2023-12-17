@@ -17,43 +17,57 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import NodeRewardsSummaryCard from "../components/NodeRewardsSummaryCard";
-import SafeSweepCard from "../components/SafeSweepCard";
-import NodePeriodicRewardsTable from "../components/NodePeriodicRewardsTable";
-import NodeContinuousRewardsTable from "../components/NodeContinuousRewardsTable";
 import { AllInclusive, EventRepeat, Help } from "@mui/icons-material";
 import { useEffect, useState } from "react";
 import { ethers } from "ethers";
-import useCanConnectedAccountWithdraw from "../hooks/useCanConnectedAccountWithdraw";
+import ClaimAllButtonGroup from "../components/ClaimAllButtonGroup";
 import CurrencyValue from "../components/CurrencyValue";
-import useNodeContinuousRewards from "../hooks/useNodeContinuousRewards";
-import useGasPrice from "../hooks/useGasPrice";
 import GasInfoFooter from "../components/GasInfoFooter";
 import DistributeEfficiencyAlert from "../components/DistributeEfficiencyAlert";
+import NodePeriodicRewardsTable from "../components/NodePeriodicRewardsTable";
+import NodeContinuousRewardsTable from "../components/NodeContinuousRewardsTable";
+import NodeRewardsSummaryCard from "../components/NodeRewardsSummaryCard";
+import RewardsHelpInfo from "../components/RewardsHelpInfo";
+import SafeSweepCard from "../components/SafeSweepCard";
+import useCanConnectedAccountWithdraw from "../hooks/useCanConnectedAccountWithdraw";
+import useNodeContinuousRewards from "../hooks/useNodeContinuousRewards";
+import useGasPrice from "../hooks/useGasPrice";
 import useNodeFeeDistributorInfo from "../hooks/useNodeFeeDistributorInfo";
 import contracts from "../contracts";
-import RewardsHelpInfo from "../components/RewardsHelpInfo";
 
-function PeriodicRewardsHeader({ sx }) {
+function PeriodicRewardsHeader({ sx, nodeAddress }) {
   return (
-    <Stack direction="row" alignItems="center">
-      <EventRepeat sx={{ m: 1, mr: 2 }} fontSize="medium" color="disabled" />
-      <Typography color="text.primary" variant="subtitle2">
-        Periodic Rewards
-      </Typography>
-      <Tooltip title={<RewardsHelpInfo />}>
-        <IconButton
-          href="https://docs.rocketpool.net/guides/node/rewards.html"
-          sx={{ opacity: 0.5 }}
-          component="a"
-          target="_blank"
-          color="inherit"
-          size="small"
-        >
-          <Help fontSize="inherit" />
-        </IconButton>
-      </Tooltip>
-    </Stack>
+    <Grid sx={sx} rowSpacing={2} container alignItems="center">
+      <Grid item xs={12} md={5}>
+        <Stack direction="row" alignItems="center">
+          <EventRepeat
+            sx={{ m: 1, mr: 2 }}
+            fontSize="medium"
+            color="disabled"
+          />
+          <Typography color="text.primary" variant="subtitle2">
+            Periodic Rewards
+          </Typography>
+          <Tooltip title={<RewardsHelpInfo />}>
+            <IconButton
+              href="https://docs.rocketpool.net/guides/node/rewards.html"
+              sx={{ opacity: 0.5 }}
+              component="a"
+              target="_blank"
+              color="inherit"
+              size="small"
+            >
+              <Help fontSize="inherit" />
+            </IconButton>
+          </Tooltip>
+        </Stack>
+      </Grid>
+      <Grid item sx={{ pl: 6 }} xs={12} md={7}>
+        <Stack direction="row" alignItems="center">
+          <ClaimAllButtonGroup nodeAddress={nodeAddress} />
+        </Stack>
+      </Grid>
+    </Grid>
   );
 }
 
