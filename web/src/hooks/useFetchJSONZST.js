@@ -7,10 +7,7 @@ export async function fetchJSONZST(url) {
     return fetch(url).then((res) => res.json());
   }
   let initingZst = zst.init();
-  let res = await fetch(url, {
-    // IPFS gateways are slow to timeout on their own.
-    signal: AbortSignal.timeout(8000), // ms
-  });
+  let res = await fetch(url);
   if (!res.ok) {
     throw new Error(`failure fetching JSON ZST from ${url}`);
   }
