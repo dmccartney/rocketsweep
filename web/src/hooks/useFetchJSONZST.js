@@ -3,8 +3,14 @@ import { ZSTDDecoder } from "zstddec";
 const zst = new ZSTDDecoder();
 
 export async function fetchJSONZST(url) {
+  if (url.endsWith(".json")) {
+    return fetch(url).then((res) => res.json());
+  }
   let initingZst = zst.init();
-  let res = await fetch(url);
+  let res = await fetch(url, {
+    // IPFS gateways are slow to timeout on their own.
+    signal: AbortSignal.timeout(8000), // ms
+  });
   if (!res.ok) {
     throw new Error(`failure fetching JSON ZST from ${url}`);
   }
@@ -15,17 +21,27 @@ export async function fetchJSONZST(url) {
   return JSON.parse(text);
 }
 
-export default function useFetchJSONZST(url, options) {
-  let urls = Array.isArray(url) ? url : [url];
-  let results = useQueries(
-    urls.map((url, i) => ({
+export default function useFetchJSONZST(urls, options) {
+  return useQueries(
+    urls.map(({ url, fallbackUrls }, i) => ({
       queryKey: ["fetchJSONZST", url],
-      queryFn: async () => fetchJSONZST(url),
+      queryFn: async () => {
+        try {
+          return await fetchJSONZST(url);
+        } catch (err) {
+          console.log(`error fetching ${url}`, err);
+          for (const fallbackUrl of fallbackUrls) {
+            console.log(`trying fallback ${fallbackUrl}`);
+            try {
+              return await fetchJSONZST(fallbackUrl);
+            } catch (err) {
+              console.log(`error fetching ${fallbackUrl}`, err);
+            }
+          }
+          throw err;
+        }
+      },
       ...((Array.isArray(options) ? options[i] : options) || {}),
     }))
   );
-  if (!Array.isArray(url)) {
-    return results[0];
-  }
-  return results;
 }
