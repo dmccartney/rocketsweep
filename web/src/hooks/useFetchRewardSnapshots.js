@@ -14,8 +14,8 @@ export default function useFetchRewardSnapshots({
   let [ipfsBase] = useSetting("ipfs.base");
   let snapshotJsons = useFetchJSONZST(
     (snapshots || []).map(({ rewardIndex, merkleTreeCID }) => ({
-      url: `${ipfsBase}/ipfs/${merkleTreeCID}/rp-rewards-${network}-${rewardIndex}.json.zst`,
-      fallbackUrls: [
+      sourceUrls: [
+        `${ipfsBase}/ipfs/${merkleTreeCID}/rp-rewards-${network}-${rewardIndex}.json.zst`,
         `${fallbackBase}/${network}/rp-rewards-${network}-${rewardIndex}.json`,
       ],
     })),

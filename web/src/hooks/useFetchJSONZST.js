@@ -20,21 +20,20 @@ export async function fetchJSONZST(url) {
 
 export default function useFetchJSONZST(urls, options) {
   return useQueries(
-    urls.map(({ url, fallbackUrls }, i) => ({
-      queryKey: ["fetchJSONZST", url],
+    urls.map(({ sourceUrls }, i) => ({
+      queryKey: ["fetchJSONZST", sourceUrls[0]],
       queryFn: async () => {
         try {
-          return await fetchJSONZST(url);
+          return await Promise.any(
+            sourceUrls.map((url) =>
+              fetchJSONZST(url).catch((err) => {
+                console.log(`failed to fetch ${url}`, err);
+                throw err;
+              })
+            )
+          );
         } catch (err) {
-          console.log(`error fetching ${url}`, err);
-          for (const fallbackUrl of fallbackUrls) {
-            console.log(`trying fallback ${fallbackUrl}`);
-            try {
-              return await fetchJSONZST(fallbackUrl);
-            } catch (err) {
-              console.log(`error fetching ${fallbackUrl}`, err);
-            }
-          }
+          console.log(`all sourceUrls failed`, sourceUrls, err);
           throw err;
         }
       },
