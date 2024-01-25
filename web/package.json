@@ -46,7 +46,8 @@
     "clean": "rm -rf build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "pretty": "npx prettier '**/*.js' --write"
+    "pretty": "npx prettier '**/*.js' --write",
+    "pretty:check": "npx prettier '**/*.js' --check"
   },
   "eslintConfig": {
     "extends": [
