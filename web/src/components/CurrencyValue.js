@@ -26,6 +26,7 @@ const typeVariantBySize = {
 };
 export default function CurrencyValue({
   value = ethers.constants.Zero,
+  valueColor = (theme) => theme.palette.text.primary,
   prefix = "",
   currency = "eth",
   perCurrency = null,
@@ -62,10 +63,7 @@ export default function CurrencyValue({
       spacing={typeVariants.spacing}
       {...props}
     >
-      <Typography
-        variant={typeVariants.value}
-        color={(theme) => theme.palette.text.primary}
-      >
+      <Typography variant={typeVariants.value} color={valueColor}>
         {prefix}
         {valueText}
       </Typography>
