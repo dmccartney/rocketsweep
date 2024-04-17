@@ -11,6 +11,7 @@ import {
   CircularProgress,
   Divider,
   FormHelperText,
+  Grid,
   IconButton,
   Stack,
   Tooltip,
@@ -36,8 +37,6 @@ import { useEnsName } from "wagmi";
 import { Link } from "react-router-dom";
 import {
   AllInclusive,
-  Done,
-  Error,
   EventRepeat,
   Help,
   OpenInNew,
@@ -200,19 +199,11 @@ function SummaryCardHeader({ asLink, nodeAddress }) {
                 <Box sx={{ mt: 0, cursor: "help" }}>
                   <Chip
                     size="small"
-                    variant={rplStatus === "effective" ? "filled" : "outlined"}
-                    color={
-                      {
-                        under: "error",
-                        close: "warning",
-                        over: "success",
-                      }[rplStatus]
-                    }
+                    variant={"filled"}
                     icon={
                       {
-                        under: <Error />,
+                        under: <Warning />,
                         close: <Warning />,
-                        over: <Warning />,
                       }[rplStatus]
                     }
                     label={
@@ -584,155 +575,109 @@ function RplPriceRangeAxis({ sx, nodeAddress }) {
   const theme = useTheme();
   const { data: details } = useNodeDetails({ nodeAddress });
   const rplEthPrice = useRplEthPrice();
-  let { rplStake, minimumRPLStake, maximumRPLStake } = details || {
+  const rplStatus = useNodeRplStatus({ nodeAddress });
+  let { rplStake, minimumRPLStake } = details || {
     rplStake: ethers.constants.Zero,
     minimumRPLStake: ethers.constants.Zero,
-    maximumRPLStake: ethers.constants.Zero,
   };
   let rplStakeOrOne = rplStake.isZero() ? ethers.constants.One : rplStake;
   return (
     <Stack
       sx={sx}
-      direction="row"
-      justifyContent="space-between"
-      alignItems="start"
+      direction="column"
+      justifyContent="center"
+      alignItems="center"
     >
-      <CurrencyValue
-        key="min"
-        value={minimumRPLStake.mul(rplEthPrice).div(rplStakeOrOne)}
-        hideCurrency
-        sx={{ opacity: 0.8 }}
-        trimZeroWhole
-        maxDecimals={4}
-        currency="eth"
-        perCurrency="rpl"
-        size="small"
-      />
-      <Stack direction={"column"} spacing={0}>
+      <Stack direction="row" spacing={0.5}>
+        <CurrencyValue
+          key="min"
+          value={minimumRPLStake.mul(rplEthPrice).div(rplStakeOrOne)}
+          valueColor={
+            {
+              under: theme.palette.error.main,
+              close: theme.palette.warning.main,
+            }[rplStatus]
+          }
+          hideCurrency
+          sx={{ opacity: 0.8 }}
+          trimZeroWhole
+          maxDecimals={4}
+          currency="eth"
+          perCurrency="rpl"
+          size="small"
+        />
         <Typography
-          sx={{ textAlign: "center", pt: 0 }}
+          sx={{ textAlign: "center", pt: 0, opacity: 0.5 }}
           variant="body1"
+          component={"span"}
           color="textSecondary"
         >
           &lt;-&gt;
         </Typography>
-        <Typography component={"span"} variant="body1" color="text.secondary">
-          <Typography
-            component={"span"}
-            variant="body1"
-            color={theme.palette.eth.main}
-          >
-            ETH
-          </Typography>
-          /
-          <Typography
-            component={"span"}
-            variant="body1"
-            color={theme.palette.rpl.main}
-          >
-            RPL
-          </Typography>
-        </Typography>
+        <CurrencyValue
+          key="max"
+          value={minimumRPLStake
+            .mul(3)
+            .div(2)
+            .mul(rplEthPrice)
+            .div(rplStakeOrOne)}
+          sx={{ opacity: 0.8 }}
+          hideCurrency
+          trimZeroWhole
+          maxDecimals={4}
+          currency="eth"
+          perCurrency="rpl"
+          size="small"
+        />
       </Stack>
-      <CurrencyValue
-        key="max"
-        value={maximumRPLStake.mul(rplEthPrice).div(rplStakeOrOne)}
-        sx={{ opacity: 0.8 }}
-        hideCurrency
-        trimZeroWhole
-        maxDecimals={4}
-        currency="eth"
-        perCurrency="rpl"
-        size="small"
-      />
-    </Stack>
-  );
-}
-
-function RplStakeEthRangeAxis({ sx, nodeAddress }) {
-  const theme = useTheme();
-  const minipools = useMinipoolDetails(nodeAddress);
-  const { data: details } = useNodeDetails({ nodeAddress });
-  let rplStatus = useNodeRplStatus({ nodeAddress });
-  let { ethMatched } = details || {
-    ethMatched: ethers.constants.Zero,
-    minipoolCount: ethers.constants.Zero,
-  };
-  const ethSupplied = bnSum(
-    (minipools || [])
-      .filter((mp) => !mp.isFinalized)
-      .map((mp) => mp.nodeDepositBalance)
-  );
-  return (
-    <>
-      <Stack
-        direction="row"
-        justifyContent="space-between"
-        alignItems="end"
-        sx={sx}
-      >
-        <Stack
-          sx={{
-            width: 95,
-            ...(rplStatus === "under"
-              ? {
-                  borderTop: `1px solid ${theme.palette.error.main}`,
-                  pt: 1,
-                }
-              : {}),
-          }}
-          direction={"column"}
-          spacing={0}
-          alignItems="start"
-        >
-          <Typography variant="caption" color="textSecondary">
-            10% of{" "}
-            <Typography variant="caption" color="text.primary">
-              {trimValue(ethers.utils.formatUnits(ethMatched), {
-                maxDecimals: 0,
-              })}
-            </Typography>
-          </Typography>
-          <Typography variant="caption" color="textSecondary">
-            borrowed
-          </Typography>
-        </Stack>
+      <Typography component={"span"} variant="body1" color="text.secondary">
         <Typography
-          sx={{ textAlign: "center", pt: 0 }}
+          component={"span"}
           variant="body1"
           color={theme.palette.eth.main}
         >
           ETH
         </Typography>
-        <Stack
-          sx={{
-            width: 95,
-            ...(rplStatus === "over"
-              ? {
-                  borderTop: `1px solid ${theme.palette.success.main}`,
-                  pt: 1,
-                }
-              : {}),
-          }}
-          direction={"column"}
-          spacing={0}
-          alignItems="end"
+        /
+        <Typography
+          component={"span"}
+          variant="body1"
+          color={theme.palette.rpl.main}
         >
-          <Typography variant="caption" color="textSecondary">
-            150% of{" "}
-            <Typography variant="caption" color="text.primary">
-              {trimValue(ethers.utils.formatUnits(ethSupplied), {
-                maxDecimals: 0,
-              })}
-            </Typography>
-          </Typography>
-          <Typography variant="caption" color="textSecondary">
-            supplied
-          </Typography>
-          {/*<CurrencyValue key="max" value={ethSupplied} maxDecimals={0} currency="eth" size="xsmall"/>*/}
-        </Stack>
+          RPL
+        </Typography>
+      </Typography>
+    </Stack>
+  );
+}
+
+function RplStakeEthRangeAxis({ sx, nodeAddress }) {
+  const { data: details } = useNodeDetails({ nodeAddress });
+  let rplStatus = useNodeRplStatus({ nodeAddress });
+  const rplEthPrice = useRplEthPrice();
+  let { minimumRPLStake, ethMatched } = details || {
+    minimumRPLStake: ethers.constants.Zero,
+    ethMatched: ethers.constants.Zero,
+  };
+  let decayThresholdRPLStake =
+    minimumRPLStake?.mul(3).div(2) || ethers.constants.Zero;
+  const decayThresholdRPLStakeEth = decayThresholdRPLStake
+    ?.mul(rplEthPrice)
+    .div(ethers.constants.WeiPerEther);
+  return (
+    <Stack direction="column" alignItems={"center"}>
+      <Stack direction={"row"} alignItems={"baseline"} spacing={0.75}>
+        <CurrencyValue
+          value={ethMatched}
+          size="small"
+          currency="eth"
+          maxDecimals={0}
+        />
+        <Typography variant="caption" color="textSecondary">
+          borrowed
+        </Typography>
       </Stack>
-      <Stack sx={{ mb: 0 }} direction="row" justifyContent="space-between">
+      <Stack direction="row" spacing={0.5}>
         <CurrencyValue
           hideCurrency
           sx={{
@@ -744,7 +689,7 @@ function RplStakeEthRangeAxis({ sx, nodeAddress }) {
                 }
               : {}),
           }}
-          justifyContent="start"
+          justifyContent="end"
           key="min"
           value={ethMatched.div(10)}
           maxDecimals={1}
@@ -752,7 +697,7 @@ function RplStakeEthRangeAxis({ sx, nodeAddress }) {
           size="small"
         />
         <Typography
-          sx={{ textAlign: "center", pt: 0 }}
+          sx={{ textAlign: "center", pt: 0, opacity: 0.5 }}
           variant="body1"
           color="textSecondary"
         >
@@ -763,21 +708,102 @@ function RplStakeEthRangeAxis({ sx, nodeAddress }) {
           sx={{
             width: 95,
             opacity: 0.8,
-            ...(rplStatus === "over"
+            ...(rplStatus === "excess"
               ? {
                   opacity: 1,
                 }
               : {}),
           }}
-          justifyContent="end"
+          justifyContent="start"
           key="max"
-          value={ethSupplied.mul(3).div(2)}
-          maxDecimals={0}
+          value={decayThresholdRPLStakeEth}
+          maxDecimals={2}
           currency="eth"
           size="small"
         />
       </Stack>
-    </>
+      <Stack direction="row" spacing={4}>
+        <Typography variant="caption" color="textSecondary">
+          10%
+        </Typography>
+        <Typography variant="caption" color="textSecondary">
+          15%
+        </Typography>
+      </Stack>
+    </Stack>
+  );
+}
+
+function decayedRplWeight({ rplStake, ethMatched, rplPrice }) {
+  // See RPIP-30
+  const weight =
+    (13.6137 + 2 * Math.log((100 * rplStake * rplPrice) / ethMatched - 13)) *
+    ethMatched;
+  return weight;
+}
+
+function DecayingRplYieldCurve(props) {
+  const {
+    x,
+    y,
+    width,
+    height,
+    fill,
+    opacity,
+    decayFill,
+    rplStake,
+    minRplPrice,
+    maxRplPrice,
+    ethMatched,
+  } = props;
+  const weightAtPrice = (rplPrice) =>
+    decayedRplWeight({
+      ethMatched: ethMatched.div(ethers.constants.WeiPerEther).toNumber(),
+      rplStake: rplStake.div(ethers.constants.WeiPerEther).toNumber(),
+      rplPrice,
+    });
+  const maxWeight = weightAtPrice(minRplPrice);
+  const yAtPrice = (price) =>
+    ((weightAtPrice(price) - maxWeight) / maxWeight) * height + y;
+  const xAtPrice = (price) =>
+    ((price - minRplPrice) / (maxRplPrice - minRplPrice)) * width + x;
+  const curvePointCount = 20; // enough to make it smooth-ish
+  const curvePricePoints = Array(curvePointCount)
+    .fill(minRplPrice)
+    .map(
+      (price, i) =>
+        price + ((maxRplPrice - minRplPrice) * i) / (curvePointCount - 1)
+    );
+  return (
+    <g>
+      <path
+        d={[`M ${xAtPrice(minRplPrice)} ${yAtPrice(minRplPrice)}`]
+          .concat(
+            curvePricePoints
+              .slice(1)
+              .map((price) => `L ${xAtPrice(price)} ${yAtPrice(price)}`)
+          )
+          .concat([`L ${xAtPrice(maxRplPrice)} ${yAtPrice(minRplPrice)}`, "Z"])
+          .join(" ")}
+        fill={decayFill}
+        opacity={opacity}
+      />
+      <path
+        d={[
+          `M ${xAtPrice(minRplPrice)} ${y + height}`,
+          `L ${xAtPrice(minRplPrice)} ${yAtPrice(minRplPrice)}`,
+        ]
+          .concat(
+            curvePricePoints
+              .slice(1)
+              .map((price) => `L ${xAtPrice(price)} ${yAtPrice(price)}`)
+          )
+          .concat([`L ${xAtPrice(maxRplPrice)} ${y + height}`, "Z"])
+          .join(" ")}
+        fill={fill}
+        opacity={opacity}
+      />
+    </g>
   );
 }
 
@@ -786,14 +812,16 @@ function RplStakeChart({ sx, nodeAddress }) {
   const { data: details } = useNodeDetails({ nodeAddress });
   const rplEthPrice = useRplEthPrice();
   let rplStatus = useNodeRplStatus({ nodeAddress });
-  let { rplStake, minimumRPLStake, maximumRPLStake } = details || {
+  let { ethMatched, rplStake, minimumRPLStake } = details || {
+    ethMatched: ethers.constants.Zero,
     rplStake: ethers.constants.Zero,
     minimumRPLStake: ethers.constants.Zero,
-    maximumRPLStake: ethers.constants.Zero,
   };
   const rplStakeEth = rplStake
     ?.mul(rplEthPrice)
     .div(ethers.constants.WeiPerEther);
+  let decayThresholdRPLStake =
+    minimumRPLStake?.mul(3).div(2) || ethers.constants.Zero;
   const minRplPrice = rplStake.isZero()
     ? 0
     : Number(
@@ -803,12 +831,22 @@ function RplStakeChart({ sx, nodeAddress }) {
             .div(rplStake.isZero() ? ethers.constants.One : rplStake)
         )
       );
+  const decayThresholdRplPrice = rplStake.isZero()
+    ? 0
+    : Number(
+        ethers.utils.formatUnits(
+          decayThresholdRPLStake
+            .mul(rplEthPrice)
+            .div(rplStake.isZero() ? ethers.constants.One : rplStake)
+        )
+      );
   const rplPrice = Number(ethers.utils.formatUnits(rplEthPrice)) || 0;
+  const maxRplStake = decayThresholdRPLStake.mul(20).div(12);
   const maxRplPrice = rplStake.isZero()
     ? 0
     : Number(
         ethers.utils.formatUnits(
-          maximumRPLStake
+          (maxRplStake.lt(rplStake) ? rplStake : maxRplStake)
             .mul(rplEthPrice)
             .div(rplStake.isZero() ? ethers.constants.One : rplStake)
         )
@@ -822,6 +860,11 @@ function RplStakeChart({ sx, nodeAddress }) {
     {
       name: "current",
       rplPrice: rplPrice,
+      value: 1,
+    },
+    {
+      name: "decay",
+      rplPrice: decayThresholdRplPrice,
       value: 1,
     },
     {
@@ -840,9 +883,22 @@ function RplStakeChart({ sx, nodeAddress }) {
     ethers.utils.formatUnits(rplStakeEth),
     { maxDecimals: 2 }
   );
+  const percentEffective = {
+    under: () => 0,
+    close: () => 1,
+    excess: () =>
+      decayedRplWeight({
+        ethMatched: ethMatched.div(ethers.constants.WeiPerEther).toNumber(),
+        rplStake: rplStake.div(ethers.constants.WeiPerEther).toNumber(),
+        rplPrice,
+      }) /
+      100 /
+      (rplStakeEth.div(ethers.constants.WeiPerEther).toNumber() || 0.00001),
+    optimal: () => 1,
+  }[rplStatus]?.();
   return (
     <Stack sx={sx} direction="column">
-      <Stack sx={{ mb: 2 }} direction="column" alignItems="center">
+      <Stack sx={{ mb: 1 }} direction="column" alignItems="center">
         <CurrencyValue
           prefix={<>≈&thinsp;</>}
           value={rplStakeEth}
@@ -863,37 +919,41 @@ function RplStakeChart({ sx, nodeAddress }) {
             size="small"
           />
         </Stack>
-        <Chip
-          sx={{ mt: 1 }}
-          size="small"
-          variant="outlined"
-          color={
-            {
-              under: "error",
-              close: "warning",
-              over: "success",
-            }[rplStatus]
-          }
-          icon={
-            {
-              under: <Error />,
-              close: <Warning />,
-              over: <Done />,
-              effective: <Done />,
-            }[rplStatus]
-          }
-          label={
-            <Typography variant="caption" color="text.primary">
-              {rplStatus}
-            </Typography>
-          }
-        />
       </Stack>
-
-      <RplStakeEthRangeAxis
-        sx={{ mt: 1, ml: 0, mr: 0 }}
-        nodeAddress={nodeAddress}
-      />
+      <Grid container alignItems={"center"} spacing={1} sx={{ mb: 1 }}>
+        <Grid item flex={1}>
+          <Divider />
+        </Grid>
+        <Grid item>
+          <Chip
+            size="medium"
+            variant="outlined"
+            color={
+              {
+                under: "error",
+                close: "warning",
+                optimal: "success",
+                excess: "success",
+              }[rplStatus]
+            }
+            label={
+              percentEffective === 0 ? (
+                <Typography variant="caption" color="text.primary">
+                  below RPL reward threshold
+                </Typography>
+              ) : (
+                <Typography variant="body1" color="text.primary">
+                  {(100 * percentEffective).toFixed(0)}% effective
+                </Typography>
+              )
+            }
+          />
+        </Grid>
+        <Grid item flex={1}>
+          <Divider />
+        </Grid>
+      </Grid>
+      <RplStakeEthRangeAxis nodeAddress={nodeAddress} />
       <ResponsiveContainer height={120} width="100%">
         <LineChart
           margin={{}}
@@ -911,14 +971,11 @@ function RplStakeChart({ sx, nodeAddress }) {
               <stop offset="33%" stopColor={theme.palette.eth.main} />
               <stop offset="66%" stopColor={theme.palette.rpl.main} />
             </linearGradient>
-            <linearGradient
-              id="warnToSuccessGradient"
-              x2="100%"
-              y2="0%"
-              gradientUnits="userSpaceOnUse"
-            >
-              <stop offset="20%" stopColor={theme.palette.warning.main} />
+            <linearGradient id="warnToSuccessGradient" x2="100%" y2="0%">
+              <stop offset="0%" stopColor={theme.palette.warning.main} />
+              <stop offset="10%" stopColor={theme.palette.warning.main} />
               <stop offset="30%" stopColor={theme.palette.success.main} />
+              <stop offset="100%" stopColor={theme.palette.success.main} />
             </linearGradient>
             <pattern
               id="errorPattern"
@@ -983,7 +1040,7 @@ function RplStakeChart({ sx, nodeAddress }) {
             tickLine
             interval={0}
             // allowDataOverflow
-            domain={[0, maxRplPrice + Math.min(0.01, minRplPrice)]}
+            domain={[0, maxRplPrice]}
           />
           <YAxis type="number" ticks={[0, 1]} domain={[0, "dataMax"]} hide />
           <YAxis type="number" ticks={[0, 1]} domain={[0, "dataMax"]} hide />
@@ -1002,6 +1059,12 @@ function RplStakeChart({ sx, nodeAddress }) {
           />
           <ReferenceLine
             xAxisId="top"
+            x={(minRplPrice * 3) / 2}
+            stroke={theme.palette.text.secondary}
+            opacity={0.3}
+          />
+          <ReferenceLine
+            xAxisId="top"
             x={maxRplPrice}
             stroke={theme.palette.text.secondary}
             opacity={0.3}
@@ -1012,7 +1075,6 @@ function RplStakeChart({ sx, nodeAddress }) {
             x2={minRplPrice}
             y1={0.05}
             y2={0.95}
-            // stroke={rplStatus === "under" ? theme.palette.error.light : "none"}
             stroke={"none"}
             fill="url(#errorPattern)"
             opacity={rplStatus === "under" ? 1 : 0.5}
@@ -1020,22 +1082,29 @@ function RplStakeChart({ sx, nodeAddress }) {
           <ReferenceArea
             xAxisId="top"
             x1={minRplPrice}
-            x2={maxRplPrice}
+            x2={decayThresholdRplPrice}
             y1={0.05}
             y2={0.95}
-            stroke={
-              rplStatus === "close" ? theme.palette.warning.light : "none"
-            }
-            opacity={rplStatus === "close" ? 1 : 0.3}
+            opacity={0.5}
             fill="url(#warnToSuccessGradient)"
           />
           <ReferenceArea
             xAxisId="top"
-            x1={maxRplPrice}
+            x1={decayThresholdRplPrice}
             y1={0.05}
             y2={0.95}
-            fill="url(#successPattern)"
-            opacity={0.5}
+            // fill={"url(#warnToSuccessGradient)"}
+            fill={theme.palette.success.main}
+            shape={
+              <DecayingRplYieldCurve
+                minRplPrice={decayThresholdRplPrice}
+                maxRplPrice={maxRplPrice}
+                rplStake={rplStake}
+                ethMatched={ethMatched}
+                opacity={0.3}
+                decayFill={"url(#successPattern)"}
+              />
+            }
           />
           {/*<ReferenceLine xAxisId="top" x={rplPrice} stroke={theme.palette.rpl.main} opacity={0.5} />*/}
           <ReferenceLine
@@ -1110,7 +1179,7 @@ function RplStakeChart({ sx, nodeAddress }) {
         </LineChart>
       </ResponsiveContainer>
       <RplPriceRangeAxis
-        sx={{ mb: 1, ml: 0, mr: 0 }}
+        sx={{ mt: 1, mb: 1, ml: 0, mr: 0 }}
         nodeAddress={nodeAddress}
       />
     </Stack>

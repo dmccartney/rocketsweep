@@ -3,19 +3,17 @@ import { ethers } from "ethers";
 
 export default function useNodeRplStatus({ nodeAddress }) {
   const { data: details } = useNodeDetails({ nodeAddress });
-  let { rplStake, minimumRPLStake, maximumRPLStake } = details || {
+  let { rplStake, minimumRPLStake } = details || {
     rplStake: ethers.constants.Zero,
     minimumRPLStake: ethers.constants.Zero,
-    maximumRPLStake: ethers.constants.Zero,
   };
-  // rplStake = rplStake.div(ethers.BigNumber.from(2));
   return !rplStake
-    ? "effective"
+    ? "optimal"
     : rplStake?.lte(minimumRPLStake)
     ? "under"
-    : rplStake?.lte(minimumRPLStake.mul(3).div(2))
+    : rplStake?.lte(minimumRPLStake.mul(11).div(10))
     ? "close"
-    : rplStake?.gt(maximumRPLStake)
-    ? "over"
-    : "effective";
+    : rplStake?.gt(minimumRPLStake.mul(3).div(2))
+    ? "excess"
+    : "optimal";
 }
