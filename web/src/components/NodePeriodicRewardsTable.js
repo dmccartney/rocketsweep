@@ -94,7 +94,7 @@ const INTERVAL_COLS = [
         sx={{ cursor: "help" }}
         title={
           type === "ongoing"
-            ? "This is the node’s share of the current smoothing pool balance. It will continue to grow until the end of the interval."
+            ? `This estimates the node’s share of the smoothing pool. It will fluctuate until the end of the interval.`
             : "This is the node’s share of the smoothing pool for the interval."
         }
       >
@@ -105,7 +105,7 @@ const INTERVAL_COLS = [
               variant="inherit"
               color="text.secondary"
             >
-              &ge;
+              &asymp;
             </Typography>
           )}
           <CurrencyValue
@@ -135,7 +135,7 @@ const INTERVAL_COLS = [
         sx={{ cursor: "help" }}
         title={
           type === "ongoing"
-            ? "This is the node’s share of RPL inflation for the interval. It will continue to grow until the end of the interval. At the end of the interval, if the node’s RPL stake is below 10% of borrowed ETH, then they receive no inflation RPL and this value becomes zero."
+            ? "This estimates the node’s share of RPL inflation for the interval. It will fluctuate until the end of the interval. At the end of the interval, if the node’s RPL stake is below 10% of borrowed ETH, then they receive no inflation RPL and this value becomes zero."
             : "This is the node’s share of RPL inflation for the interval."
         }
       >
@@ -146,7 +146,7 @@ const INTERVAL_COLS = [
               variant="inherit"
               color="text.secondary"
             >
-              &ge;
+              &asymp;
             </Typography>
           )}
           <CurrencyValue size="small" currency="rpl" value={value} />
