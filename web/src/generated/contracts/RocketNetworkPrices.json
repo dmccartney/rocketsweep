@@ -30,6 +30,12 @@
         {
           "indexed": false,
           "internalType": "uint256",
+          "name": "slotTimestamp",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
           "name": "rplPrice",
           "type": "uint256"
         },
@@ -47,9 +53,15 @@
       "anonymous": false,
       "inputs": [
         {
-          "indexed": false,
+          "indexed": true,
           "internalType": "uint256",
           "name": "block",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "slotTimestamp",
           "type": "uint256"
         },
         {
@@ -77,6 +89,11 @@
         },
         {
           "internalType": "uint256",
+          "name": "_slotTimestamp",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
           "name": "_rplPrice",
           "type": "uint256"
         }
@@ -84,19 +101,6 @@
       "name": "executeUpdatePrices",
       "outputs": [],
       "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "getLatestReportableBlock",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
       "type": "function"
     },
     {
@@ -130,6 +134,11 @@
         {
           "internalType": "uint256",
           "name": "_block",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_slotTimestamp",
           "type": "uint256"
         },
         {

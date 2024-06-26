@@ -22,6 +22,50 @@
           "type": "address"
         },
         {
+          "indexed": true,
+          "internalType": "address",
+          "name": "withdrawalAddress",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "time",
+          "type": "uint256"
+        }
+      ],
+      "name": "NodeRPLWithdrawalAddressSet",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "node",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "time",
+          "type": "uint256"
+        }
+      ],
+      "name": "NodeRPLWithdrawalAddressUnset",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "node",
+          "type": "address"
+        },
+        {
           "indexed": false,
           "internalType": "uint256",
           "name": "time",
@@ -87,6 +131,19 @@
       ],
       "name": "NodeTimezoneLocationSet",
       "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_nodeAddress",
+          "type": "address"
+        }
+      ],
+      "name": "confirmRPLWithdrawalAddress",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
     },
     {
       "inputs": [
@@ -391,12 +448,69 @@
           "type": "address"
         }
       ],
+      "name": "getNodePendingRPLWithdrawalAddress",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_nodeAddress",
+          "type": "address"
+        }
+      ],
       "name": "getNodePendingWithdrawalAddress",
       "outputs": [
         {
           "internalType": "address",
           "name": "",
           "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_nodeAddress",
+          "type": "address"
+        }
+      ],
+      "name": "getNodeRPLWithdrawalAddress",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_nodeAddress",
+          "type": "address"
+        }
+      ],
+      "name": "getNodeRPLWithdrawalAddressIsSet",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
         }
       ],
       "stateMutability": "view",
@@ -568,6 +682,29 @@
           "type": "address"
         },
         {
+          "internalType": "address",
+          "name": "_newRPLWithdrawalAddress",
+          "type": "address"
+        },
+        {
+          "internalType": "bool",
+          "name": "_confirm",
+          "type": "bool"
+        }
+      ],
+      "name": "setRPLWithdrawalAddress",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_nodeAddress",
+          "type": "address"
+        },
+        {
           "internalType": "uint256",
           "name": "_network",
           "type": "uint256"
@@ -600,6 +737,19 @@
         }
       ],
       "name": "setTimezoneLocation",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_nodeAddress",
+          "type": "address"
+        }
+      ],
+      "name": "unsetRPLWithdrawalAddress",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
