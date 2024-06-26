@@ -41,6 +41,7 @@ import {
   estimateDistributeConsensusBatchGas,
   estimateFinalizeGas,
   estimateTipsMevGas,
+  firstOrOnly,
   MinipoolStatus,
   safeAppUrl,
 } from "../utils";
@@ -499,7 +500,7 @@ function useSweeper({ nodeAddress }) {
       txs = txs.concat([
         {
           operation: "0x00",
-          to: contracts.RocketMerkleDistributorMainnet.address,
+          to: firstOrOnly(contracts.RocketMerkleDistributorMainnet.address),
           value: "0",
           data: new ethers.utils.Interface(
             contracts.RocketMerkleDistributorMainnet.abi
