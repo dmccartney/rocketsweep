@@ -272,6 +272,25 @@
           "type": "uint256"
         }
       ],
+      "name": "getClaimIntervalExecutionAddress",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_interval",
+          "type": "uint256"
+        }
+      ],
       "name": "getClaimIntervalExecutionBlock",
       "outputs": [
         {
@@ -483,6 +502,87 @@
           "internalType": "uint256",
           "name": "",
           "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_trustedNodeAddress",
+          "type": "address"
+        },
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "rewardIndex",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "executionBlock",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "consensusBlock",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "merkleRoot",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "string",
+              "name": "merkleTreeCID",
+              "type": "string"
+            },
+            {
+              "internalType": "uint256",
+              "name": "intervalsPassed",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "treasuryRPL",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256[]",
+              "name": "trustedNodeRPL",
+              "type": "uint256[]"
+            },
+            {
+              "internalType": "uint256[]",
+              "name": "nodeRPL",
+              "type": "uint256[]"
+            },
+            {
+              "internalType": "uint256[]",
+              "name": "nodeETH",
+              "type": "uint256[]"
+            },
+            {
+              "internalType": "uint256",
+              "name": "userETH",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct RewardSubmission",
+          "name": "_submission",
+          "type": "tuple"
+        }
+      ],
+      "name": "getSubmissionFromNodeExists",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
         }
       ],
       "stateMutability": "view",
