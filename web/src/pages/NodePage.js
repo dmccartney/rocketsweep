@@ -8,11 +8,14 @@ import {
 import Layout from "../components/Layout";
 import { useParams } from "react-router-dom";
 import {
+  Alert,
+  AlertTitle,
   Button,
   CircularProgress,
   FormHelperText,
   Grid,
   IconButton,
+  Link,
   Stack,
   Tooltip,
   Typography,
@@ -21,7 +24,12 @@ import NodeRewardsSummaryCard from "../components/NodeRewardsSummaryCard";
 import SafeSweepCard from "../components/SafeSweepCard";
 import NodePeriodicRewardsTable from "../components/NodePeriodicRewardsTable";
 import NodeContinuousRewardsTable from "../components/NodeContinuousRewardsTable";
-import { AllInclusive, EventRepeat, Help } from "@mui/icons-material";
+import {
+  AllInclusive,
+  EventRepeat,
+  Help,
+  OpenInNew,
+} from "@mui/icons-material";
 import { useEffect, useState } from "react";
 import { ethers } from "ethers";
 import useCanConnectedAccountWithdraw from "../hooks/useCanConnectedAccountWithdraw";
@@ -205,6 +213,34 @@ export default function NodePage() {
             <NodeRewardsSummaryCard nodeAddress={nodeAddress} />
           </Grid>
           <Grid key={"sweep-table-cards"} item xs={12} lg={8}>
+            {/* TODO: delete Alert after #43 is closed. */}
+            <Alert
+              sx={{ mb: 4 }}
+              severity={"error"}
+              action={
+                <Button
+                  endIcon={<OpenInNew />}
+                  color={"inherit"}
+                  href="https://github.com/dmccartney/rocketsweep/issues/43"
+                  target={"_blank"}
+                >
+                  Track
+                </Button>
+              }
+            >
+              <AlertTitle>Limited Functionality</AlertTitle>
+              The recent{" "}
+              <Link
+                target="_blank"
+                color="inherit"
+                underline="always"
+                href="https://medium.com/rocket-pool/rocket-pool-houston-launch-b056ca1a6c10"
+              >
+                Houston upgrade
+              </Link>{" "}
+              broke some of the functionality here. <br /> Thank you for your
+              patience while we fix. -dmccartney
+            </Alert>
             <SafeSweepCard sx={{ mb: 4 }} nodeAddress={nodeAddress} />
             <NodePeriodicRewardsTable
               sx={{ mb: 5, border: 0 }}
