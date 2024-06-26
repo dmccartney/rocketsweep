@@ -1,6 +1,10 @@
 import { ethers } from "ethers";
 import _ from "lodash";
 
+export function firstOrOnly(arrayOrNot) {
+  return Array.isArray(arrayOrNot) ? arrayOrNot[0] : arrayOrNot;
+}
+
 // Trim the input address to be "0x####...####"
 export function shortenAddress(address, charCount = 4) {
   // .getAddress here ensures we're dealing with the checksum address
