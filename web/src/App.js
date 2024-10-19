@@ -1,6 +1,7 @@
 import { BrowserRouter, HashRouter, Route, Routes } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import NodePage from "./pages/NodePage";
+import NodeSetPage from "./pages/NodeSetPage";
 import IntervalPage from "./pages/IntervalPage";
 
 function Router({ children }) {
@@ -21,6 +22,7 @@ function App() {
           exact
           element={<IntervalPage />}
         />
+        <Route path="/nodeset" exact element={<NodeSetPage />} />
       </Routes>
     </Router>
   );

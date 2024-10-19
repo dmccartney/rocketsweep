@@ -21,7 +21,10 @@ export default function WalletChip({
   });
   return (
     <Chip
-      sx={sx}
+      sx={{
+        cursor: !(href || to || onClick) ? "inherit" : undefined,
+        ...sx,
+      }}
       variant={"filled"}
       avatar={<WalletAvatar size={avatarSize} walletAddress={walletAddress} />}
       component={href ? "a" : to ? Link : "div"}

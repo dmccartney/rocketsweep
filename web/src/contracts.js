@@ -1,3 +1,4 @@
+import OperatorDistributor from "./generated/contracts/OperatorDistributor.json";
 import RocketMerkleDistributorMainnet from "./generated/contracts/RocketMerkleDistributorMainnet.json";
 import RocketMinipoolBase from "./generated/contracts/RocketMinipoolBase.json";
 import RocketMinipoolDelegate from "./generated/contracts/RocketMinipoolDelegate.json";
@@ -7,11 +8,18 @@ import RocketNodeDistributorInterface from "./generated/contracts/RocketNodeDist
 import RocketNodeManager from "./generated/contracts/RocketNodeManager.json";
 import RocketRewardsPool from "./generated/contracts/RocketRewardsPool.json";
 import RocketStorageK from "./generated/contracts/RocketStorage.json";
+import SuperNodeAccount from "./generated/contracts/SuperNodeAccount.json";
+import WETH from "./generated/contracts/WETH.json";
+import WETHVault from "./generated/contracts/WETHVault.json";
 
 // This names, locates, and defines the interface to the contracts we use.
 // The address can change during a rocketpool upgrade. The first `address` is the latest address.
 // But we hang onto the old addresses for things like searching all event logs.
 const contracts = {
+  OperatorDistributor: {
+    address: "0x102809fE582ecaa527bB316DCc4E99fc35FBAbb9",
+    abi: OperatorDistributor.abi,
+  },
   RocketMerkleDistributorMainnet: {
     address: [
       "0x5cE71E603B138F7e65029Cc1918C0566ed0dBD4B",
@@ -63,6 +71,18 @@ const contracts = {
   RocketStorage: {
     address: "0x1d8f8f00cfa6758d7bE78336684788Fb0ee0Fa46",
     abi: RocketStorageK.abi,
+  },
+  SuperNodeAccount: {
+    address: "0x2A906f92B0378Bb19a3619E2751b1e0b8cab6B29",
+    abi: SuperNodeAccount.abi,
+  },
+  WETH: {
+    address: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+    abi: WETH.abi,
+  },
+  WETHVault: {
+    address: "0xbb22d59b73d7a6f3a8a83a214becc67eb3b511fe",
+    abi: WETHVault.abi,
   },
 };
 
