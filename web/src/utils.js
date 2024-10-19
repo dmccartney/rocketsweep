@@ -12,6 +12,14 @@ export function shortenAddress(address, charCount = 4) {
   return `${a.substring(0, charCount + 2)}...${a.substring(42 - charCount)}`;
 }
 
+// Trim the input hash to be "0x####...####"
+export function shortenHash(hash, charCount = 4) {
+  const a = hash || "0x00000000";
+  return `${a.substring(0, charCount + 2)}...${a.substring(
+    a.length - charCount
+  )}`;
+}
+
 // Sort BigNumber params `a` and `b` (for use in DataGrid sortComparator)
 export function BNSortComparator(a, b) {
   if (!a) {
