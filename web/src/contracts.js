@@ -8,6 +8,9 @@ import RocketNodeDistributorInterface from "./generated/contracts/RocketNodeDist
 import RocketNodeManager from "./generated/contracts/RocketNodeManager.json";
 import RocketRewardsPool from "./generated/contracts/RocketRewardsPool.json";
 import RocketStorageK from "./generated/contracts/RocketStorage.json";
+import RocketVault from "./generated/contracts/RocketVault.json";
+import RPL from "./generated/contracts/RPL.json";
+import RPLVault from "./generated/contracts/RPLVault.json";
 import SuperNodeAccount from "./generated/contracts/SuperNodeAccount.json";
 import WETH from "./generated/contracts/WETH.json";
 import WETHVault from "./generated/contracts/WETHVault.json";
@@ -71,6 +74,18 @@ const contracts = {
   RocketStorage: {
     address: "0x1d8f8f00cfa6758d7bE78336684788Fb0ee0Fa46",
     abi: RocketStorageK.abi,
+  },
+  RocketVault: {
+    address: "0x3bdc69c4e5e13e52a65f5583c23efb9636b469d6",
+    abi: RocketVault.abi,
+  },
+  RPL: {
+    address: "0xD33526068D116cE69F19A9ee46F0bd304F21A51f",
+    abi: RPL.abi,
+  },
+  RPLVault: {
+    address: "0x1DB1Afd9552eeB28e2e36597082440598B7F1320",
+    abi: RPLVault.abi,
   },
   SuperNodeAccount: {
     address: "0x2A906f92B0378Bb19a3619E2751b1e0b8cab6B29",
