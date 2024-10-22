@@ -11,6 +11,7 @@ import {
   Divider,
   Grid,
   Stack,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import useK from "../hooks/useK";
@@ -29,6 +30,7 @@ import useBlock from "../hooks/useBlock";
 import { Link } from "react-router-dom";
 import useRplEthPrice from "../hooks/useRplEthPrice";
 import useNodeDetails from "../hooks/useNodeDetails";
+import { RadialBar, RadialBarChart } from "recharts";
 
 export default function NodeSetPage() {
   return (
@@ -542,6 +544,46 @@ function NodeSetMiniPoolsColumn() {
     moreMinipoolCountByREth,
     moreMinipoolCountByRpl
   );
+  let minipoolsByOperator = _.groupBy(
+    activeMinipools,
+    ({ args: [, operatorAddress] }) => operatorAddress
+  );
+  let operators = Object.keys(minipoolsByOperator);
+
+  // Gini ref https://en.wikipedia.org/wiki/Gini_coefficient#Definition
+  let x = operators.map((operator) => minipoolsByOperator[operator].length);
+  let g =
+    _.sum(x.map((xi) => _.sum(x.map((xj) => Math.abs(xi - xj))))) /
+    (2 * x.length * _.sum(x));
+  // HHI ref https://en.wikipedia.org/wiki/Herfindahl%E2%80%93Hirschman_index#Formula
+  let hhi = _.sum(x.map((xi) => (xi / minipools.length) ** 2));
+
+  let minipoolsByOperatorByCount = _.groupBy(
+    minipoolsByOperator,
+    (minipools) => minipools.length
+  );
+  let data = Object.keys(minipoolsByOperatorByCount).map((nText) => ({
+    minipoolCount: Number(nText),
+    operatorCount: minipoolsByOperatorByCount[nText].length,
+  }));
+  const colors = [
+    "#8884d8",
+    "#83a6ed",
+    "#8dd1e1",
+    "#82ca9d",
+    "#a4de6c",
+    "#d0ed57",
+    "#ffc658",
+    "#ff7043",
+  ];
+  let radialData = data.map(({ minipoolCount, operatorCount }, i) => ({
+    name: `${minipoolCount}`,
+    minipoolCount,
+    operatorCount: _.sum(
+      data.slice(i).map(({ operatorCount }) => operatorCount)
+    ),
+    fill: colors[i % colors.length],
+  }));
   return (
     <Stack spacing={1}>
       <Card key={"summary"}>
@@ -553,31 +595,119 @@ function NodeSetMiniPoolsColumn() {
             avatar={<NodeSetIcon fontSize="medium" color="disabled" />}
             subheader="NodeSet Minipools"
           />
-          <CardContent>
+          <CardContent sx={{ pt: 0 }}>
             <Stack spacing={1}>
-              <Stack direction={"row"} alignItems={"baseline"} spacing={1}>
-                <Chip
-                  component="span"
-                  size="small"
-                  label={activeMinipools.length}
-                />
-                <Typography variant={"caption"} color={"text.secondary"}>
-                  minipools created across
-                </Typography>
-                <Chip
-                  component="span"
-                  size="small"
-                  label={
-                    _.uniq(
-                      activeMinipools.map(
-                        ({ args: [, operatorAddress] }) => operatorAddress
-                      )
-                    ).length
+              <Stack
+                direction={"row"}
+                justifyContent={"center"}
+                sx={{ ml: -16 }}
+                alignItems={"center"}
+                spacing={1}
+              >
+                <Tooltip
+                  title={
+                    <Stack
+                      direction={"row"}
+                      spacing={3}
+                      sx={(theme) => ({ color: theme.palette.text.primary })}
+                    >
+                      <Stack>
+                        <Typography
+                          variant={"subtitle2"}
+                          color={"text.secondary"}
+                        >
+                          Gini
+                        </Typography>
+                        <Typography variant={"body2"}>
+                          {(100 * g).toFixed(2)}%
+                        </Typography>
+                      </Stack>
+                      <Stack>
+                        <Typography
+                          variant={"subtitle2"}
+                          color={"text.secondary"}
+                        >
+                          HHI
+                        </Typography>
+                        <Typography variant={"body2"}>
+                          {(100 * hhi).toFixed(2)}%
+                        </Typography>
+                      </Stack>
+                    </Stack>
                   }
-                />
-                <Typography variant={"caption"} color={"text.secondary"}>
-                  operators.
-                </Typography>
+                >
+                  <Box sx={{ position: "relative" }}>
+                    <RadialBarChart
+                      cx="50%"
+                      cy="50%"
+                      margin={{
+                        top: 0,
+                        right: 0,
+                        bottom: 0,
+                        left: 0,
+                      }}
+                      width={128}
+                      height={128}
+                      startAngle={10}
+                      endAngle={350}
+                      innerRadius="40%"
+                      outerRadius="100%"
+                      data={radialData}
+                    >
+                      <RadialBar
+                        minAngle={0}
+                        background={{ fill: "rgba(128, 128, 128, 0.15)" }}
+                        clockWise
+                        dataKey="operatorCount"
+                      />
+                    </RadialBarChart>
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        top: "41%",
+                        left: "35%",
+                        bottom: "50%",
+                      }}
+                    >
+                      <Stack
+                        sx={(theme) => ({
+                          background: `linear-gradient(90deg, ${theme.palette.background.default} 0%, ${theme.palette.background.default} 45%, rgba(0,0,0,0) 50%, rgba(0,0,0,0) 100%)`,
+                          borderRadius: 4,
+                        })}
+                        direction={"row"}
+                        alignItems={"baseline"}
+                        spacing={1}
+                      >
+                        <Chip
+                          sx={{ cursor: "inherit" }}
+                          component="span"
+                          size="small"
+                          label={Number(
+                            activeMinipools.length
+                          ).toLocaleString()}
+                        />
+                        <Typography
+                          variant={"caption"}
+                          color={"text.secondary"}
+                        >
+                          minipools
+                        </Typography>
+                        <Chip
+                          sx={{ cursor: "inherit" }}
+                          component="span"
+                          size="small"
+                          label={operators.length}
+                        />
+                        <Typography
+                          variant={"caption"}
+                          color={"text.secondary"}
+                        >
+                          operators
+                        </Typography>
+                      </Stack>
+                    </Box>
+                  </Box>
+                </Tooltip>
               </Stack>
               <Stack
                 sx={{
@@ -595,7 +725,7 @@ function NodeSetMiniPoolsColumn() {
               >
                 <Chip component="span" size="small" label={moreMinipoolCount} />
                 <Typography variant={"caption"} color={"text.secondary"}>
-                  more can be created from available deposits.
+                  more from available deposits
                 </Typography>
               </Stack>
               <Grid container sx={{ pt: 1 }}>
