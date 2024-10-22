@@ -86,7 +86,7 @@ function NodeRplDepositColumn() {
     <Stack spacing={1}>
       <Card key={"summary"}>
         <CardActionArea
-          href={`https://app.gravitaprotocol.com/constellation/xreth`}
+          href={`https://app.gravitaprotocol.com/constellation/xrpl`}
           target="_blank"
         >
           <CardHeader
