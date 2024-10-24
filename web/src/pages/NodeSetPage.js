@@ -8,8 +8,10 @@ import {
   CardContent,
   CardHeader,
   Chip,
+  CircularProgress,
   Divider,
   Grid,
+  Paper,
   Stack,
   Tooltip,
   Typography,
@@ -499,31 +501,34 @@ function NodeSetWalletChip({ walletAddress }) {
   );
 }
 
+const oneEth = ethers.utils.parseEther("1");
 function NodeSetMiniPoolsColumn() {
   let [isShowingAll, setShowingAll] = useState(false);
-  let rplEthPrice = useRplEthPrice();
+  let rplEthPrice = useRplEthPrice(ethers.utils.parseEther(".004")); // default until loaded
   const { data: superNodeDetails } = useNodeDetails({
     nodeAddress: contracts.SuperNodeAccount.address,
   });
   let { data: minimumStakeRatio } =
     useK.OperatorDistributor.Read.minimumStakeRatio();
-
+  minimumStakeRatio = minimumStakeRatio || oneEth;
   let { rplStake } = superNodeDetails || {
     rplStake: ethers.constants.Zero,
   };
-  let rplStakedInEth = rplStake
-    ?.mul(rplEthPrice)
-    .div(ethers.utils.parseEther("1"));
-  let { data: minipoolsInOrder } = useK.SuperNodeAccount.Find.MinipoolCreated({
-    args: [null, null],
-    from: 0,
-    to: "latest",
-  });
+  let rplStakedInEth = rplStake.mul(rplEthPrice).div(oneEth);
+  let { isLoading, data: minipoolsInOrder } =
+    useK.SuperNodeAccount.Find.MinipoolCreated({
+      args: [null, null],
+      from: 0,
+      to: "latest",
+    });
   let minipools = _.reverse(_.clone(minipoolsInOrder || []));
+
+  // TODO: detect no-longer active minipools
   let activeMinipools = minipools || [];
+
   let maxMinipoolCountByRpl = rplStakedInEth
-    ?.mul(ethers.utils.parseEther("1"))
-    .div(minimumStakeRatio || ethers.utils.parseEther("1"))
+    .mul(oneEth)
+    .div(minimumStakeRatio)
     .div(ethers.utils.parseEther("24"))
     .toNumber();
   let { data: xREthBalance } = useBalance({
@@ -539,6 +544,33 @@ function NodeSetMiniPoolsColumn() {
     .div(ethers.utils.parseEther("24"))
     .toNumber();
   let moreMinipoolCountByRpl = maxMinipoolCountByRpl - activeMinipools.length;
+  let rplPerMinipool = ethers.utils
+    .parseEther("24")
+    .mul(minimumStakeRatio)
+    .div(rplEthPrice);
+  let moreRplRequiredForAnother =
+    moreMinipoolCountByRpl > 0
+      ? ethers.constants.Zero
+      : ethers.utils
+          .parseEther("24")
+          .mul(activeMinipools.length + 1)
+          .mul(minimumStakeRatio)
+          .div(ethers.utils.parseEther("1"))
+          .sub(rplStakedInEth)
+          .mul(ethers.utils.parseEther("1"))
+          .div(rplEthPrice);
+  let moreXREthRequiredForAnother =
+    moreMinipoolCountByXREth > 0
+      ? ethers.constants.Zero
+      : ethers.utils
+          .parseEther("8")
+          .sub(xREthBalance?.value || ethers.constants.Zero);
+  let moreREthRequiredForAnother =
+    moreMinipoolCountByREth > 0
+      ? ethers.constants.Zero
+      : ethers.utils
+          .parseEther("24")
+          .sub(rEthBalance?.value || ethers.constants.Zero);
   let moreMinipoolCount = Math.min(
     moreMinipoolCountByXREth,
     moreMinipoolCountByREth,
@@ -682,9 +714,17 @@ function NodeSetMiniPoolsColumn() {
                           sx={{ cursor: "inherit" }}
                           component="span"
                           size="small"
-                          label={Number(
-                            activeMinipools.length
-                          ).toLocaleString()}
+                          label={
+                            isLoading ? (
+                              <CircularProgress
+                                color="inherit"
+                                size={12}
+                                sx={{ ml: 0.5, mr: 0.5 }}
+                              />
+                            ) : (
+                              Number(activeMinipools.length).toLocaleString()
+                            )
+                          }
                         />
                         <Typography
                           variant={"caption"}
@@ -696,7 +736,17 @@ function NodeSetMiniPoolsColumn() {
                           sx={{ cursor: "inherit" }}
                           component="span"
                           size="small"
-                          label={operators.length}
+                          label={
+                            isLoading ? (
+                              <CircularProgress
+                                color="inherit"
+                                size={12}
+                                sx={{ ml: 0.5, mr: 0.5 }}
+                              />
+                            ) : (
+                              operators.length
+                            )
+                          }
                         />
                         <Typography
                           variant={"caption"}
@@ -713,7 +763,7 @@ function NodeSetMiniPoolsColumn() {
                 sx={{
                   mt: 0.5,
                   borderRadius: "20px",
-                  ...(moreMinipoolCount < 1
+                  ...(moreMinipoolCount < 1 || isLoading
                     ? {}
                     : {
                         background: "rgba(128,255,128,0.1)",
@@ -723,7 +773,11 @@ function NodeSetMiniPoolsColumn() {
                 alignItems={"baseline"}
                 spacing={1}
               >
-                <Chip component="span" size="small" label={moreMinipoolCount} />
+                <Chip
+                  component="span"
+                  size="small"
+                  label={isLoading ? "…" : Math.max(0, moreMinipoolCount)}
+                />
                 <Typography variant={"caption"} color={"text.secondary"}>
                   more from available deposits
                 </Typography>
@@ -881,7 +935,6 @@ function NodeSetMiniPoolsColumn() {
                 </Stack>
                 <Grid
                   container
-                  columnSpacing={1}
                   sx={{
                     mt: 0.5,
                     borderRadius: "20px",
@@ -893,7 +946,7 @@ function NodeSetMiniPoolsColumn() {
                   }}
                   alignItems={"baseline"}
                 >
-                  <Grid item xs={4}>
+                  <Grid item xs={3.5}>
                     <Stack
                       direction="row"
                       spacing={0.5}
@@ -909,7 +962,7 @@ function NodeSetMiniPoolsColumn() {
                       <NodeSetAvatar />
                     </Stack>
                   </Grid>
-                  <Grid item xs={2}>
+                  <Grid item xs={2.5}>
                     <Stack
                       direction="row"
                       spacing={0.5}
@@ -917,10 +970,14 @@ function NodeSetMiniPoolsColumn() {
                       justifyContent="flex-end"
                     >
                       <Chip
-                        sx={{ width: "100%" }}
+                        sx={{ width: "100%", ml: 1, mr: 1 }}
                         component="span"
                         size="small"
-                        label={moreMinipoolCountByXREth}
+                        label={
+                          isLoading
+                            ? "…"
+                            : Math.max(0, moreMinipoolCountByXREth)
+                        }
                       />
                     </Stack>
                   </Grid>
@@ -947,7 +1004,6 @@ function NodeSetMiniPoolsColumn() {
                 </Grid>
                 <Grid
                   container
-                  columnSpacing={1}
                   sx={{
                     mt: 0.5,
                     borderRadius: "20px",
@@ -959,7 +1015,7 @@ function NodeSetMiniPoolsColumn() {
                   }}
                   alignItems={"baseline"}
                 >
-                  <Grid item xs={4}>
+                  <Grid item xs={3.5}>
                     <Stack
                       direction="row"
                       spacing={0.5}
@@ -977,7 +1033,7 @@ function NodeSetMiniPoolsColumn() {
                       </Typography>
                     </Stack>
                   </Grid>
-                  <Grid item xs={2}>
+                  <Grid item xs={2.5}>
                     <Stack
                       direction="row"
                       spacing={0.5}
@@ -985,10 +1041,12 @@ function NodeSetMiniPoolsColumn() {
                       justifyContent="flex-end"
                     >
                       <Chip
-                        sx={{ width: "100%" }}
+                        sx={{ width: "100%", ml: 1, mr: 1 }}
                         component="span"
                         size="small"
-                        label={moreMinipoolCountByREth}
+                        label={
+                          isLoading ? "…" : Math.max(0, moreMinipoolCountByREth)
+                        }
                       />
                     </Stack>
                   </Grid>
@@ -1015,7 +1073,7 @@ function NodeSetMiniPoolsColumn() {
                 </Grid>
                 <Grid
                   container
-                  columnSpacing={1}
+                  // columnSpacing={1}
                   sx={{
                     mt: 0.5,
                     borderRadius: "20px",
@@ -1027,7 +1085,7 @@ function NodeSetMiniPoolsColumn() {
                   }}
                   alignItems={"baseline"}
                 >
-                  <Grid item xs={4}>
+                  <Grid item xs={3.5}>
                     <Stack
                       direction="row"
                       spacing={0.5}
@@ -1043,7 +1101,7 @@ function NodeSetMiniPoolsColumn() {
                       <NodeSetAvatar />
                     </Stack>
                   </Grid>
-                  <Grid item xs={2}>
+                  <Grid item xs={2.5}>
                     <Stack
                       direction="row"
                       spacing={0.5}
@@ -1051,37 +1109,141 @@ function NodeSetMiniPoolsColumn() {
                       justifyContent="flex-end"
                     >
                       <Chip
-                        sx={{ width: "100%" }}
+                        sx={{ width: "100%", ml: 1, mr: 1 }}
                         component="span"
                         size="small"
-                        label={moreMinipoolCountByRpl}
+                        label={
+                          isLoading ? "…" : Math.max(0, moreMinipoolCountByRpl)
+                        }
                       />
                     </Stack>
                   </Grid>
                   <Grid item xs={6}>
-                    <Stack
-                      direction="row"
-                      spacing={0.5}
-                      alignItems="baseline"
-                      justifyContent="flex-start"
-                    >
-                      <Typography variant="caption" color="textSecondary">
-                        more @
-                      </Typography>
-                      <CurrencyValue
-                        value={minimumStakeRatio?.mul(100)}
-                        trimZeroWhole
-                        maxDecimals={0}
-                        currency={"ratio"}
-                        hideCurrency
-                        size="xsmall"
-                      />
-                      <Typography variant={"caption"} color={"text.secondary"}>
-                        % borrow limit
-                      </Typography>
+                    <Stack spacing={0}>
+                      <Stack
+                        direction="row"
+                        spacing={0.5}
+                        alignItems="baseline"
+                        justifyContent="flex-start"
+                      >
+                        <Typography variant="caption" color="textSecondary">
+                          more @
+                        </Typography>
+                        <CurrencyValue
+                          value={minimumStakeRatio?.mul(100)}
+                          trimZeroWhole
+                          maxDecimals={0}
+                          currency={"ratio"}
+                          hideCurrency
+                          size="xsmall"
+                        />
+                        <Typography
+                          variant={"caption"}
+                          color={"text.secondary"}
+                        >
+                          % borrow limit
+                        </Typography>
+                      </Stack>
+                      <Stack
+                        direction="row"
+                        spacing={0.5}
+                        alignItems="baseline"
+                      >
+                        <Typography variant="caption" color="text.secondary">
+                          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;≈
+                        </Typography>
+                        <CurrencyValue
+                          value={rplPerMinipool.add(
+                            ethers.utils.parseEther("1")
+                          )}
+                          trimZeroWhole
+                          maxDecimals={0}
+                          currency={"rpl"}
+                          perCurrency={"minipool"}
+                          size="xsmall"
+                        />
+                      </Stack>
                     </Stack>
                   </Grid>
                 </Grid>
+                {isLoading || moreMinipoolCount > 0 || (
+                  <Paper
+                    sx={{ mt: 2, p: 1 }}
+                    elevation={8}
+                    icon={false}
+                    severity={"info"}
+                  >
+                    <Stack alignItems={"center"} spacing={1}>
+                      <Typography variant={"caption"} color={"text.secondary"}>
+                        deposits required for the next minipool
+                      </Typography>
+                      <Stack alignItems={"center"}>
+                        {moreRplRequiredForAnother.gt(0) && (
+                          <Stack
+                            direction={"row"}
+                            alignItems={"baseline"}
+                            spacing={0.5}
+                          >
+                            <CurrencyValue
+                              value={moreRplRequiredForAnother.add(
+                                ethers.utils.parseEther("1")
+                              )}
+                              maxDecimals={0}
+                              currency={"rpl"}
+                              size={"xsmall"}
+                            />
+                            <Typography variant="caption" color="textSecondary">
+                              from
+                            </Typography>
+                            <NodeSetAvatar />
+                          </Stack>
+                        )}
+                        {moreXREthRequiredForAnother.gt(0) && (
+                          <Stack
+                            direction={"row"}
+                            alignItems={"baseline"}
+                            spacing={0.5}
+                          >
+                            <CurrencyValue
+                              value={moreXREthRequiredForAnother.add(
+                                ethers.utils.parseEther("1")
+                              )}
+                              maxDecimals={0}
+                              currency={"eth"}
+                              size={"xsmall"}
+                            />
+                            <Typography variant="caption" color="textSecondary">
+                              from
+                            </Typography>
+                            <NodeSetAvatar />
+                          </Stack>
+                        )}
+                        {moreREthRequiredForAnother.gt(0) && (
+                          <Stack
+                            direction={"row"}
+                            alignItems={"baseline"}
+                            spacing={0.5}
+                          >
+                            <CurrencyValue
+                              value={moreREthRequiredForAnother.add(
+                                ethers.utils.parseEther("1")
+                              )}
+                              maxDecimals={0}
+                              currency={"eth"}
+                              size={"xsmall"}
+                            />
+                            <Typography variant="caption" color="textSecondary">
+                              from
+                            </Typography>
+                            <Typography variant={"caption"} color={"rpl.dark"}>
+                              rETH
+                            </Typography>
+                          </Stack>
+                        )}
+                      </Stack>
+                    </Stack>
+                  </Paper>
+                )}
               </Stack>
             </Stack>
           </CardContent>
