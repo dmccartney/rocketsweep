@@ -22,13 +22,14 @@ import WalletChip from "../components/WalletChip";
 import NodeSetIcon from "../components/NodeSetIcon";
 import CurrencyValue from "../components/CurrencyValue";
 import { ethers } from "ethers";
-import { etherscanUrl, shortenAddress } from "../utils";
+import { etherscanUrl, shortenAddress, trimValue } from "../utils";
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
 import { useTransaction, useBalance } from "wagmi";
 import moment from "moment";
 import { useState } from "react";
 import contracts from "../contracts";
 import useBlock from "../hooks/useBlock";
+import useGasPrice from "../hooks/useGasPrice";
 import { Link } from "react-router-dom";
 import useRplEthPrice from "../hooks/useRplEthPrice";
 import useNodeDetails from "../hooks/useNodeDetails";
@@ -504,6 +505,7 @@ function NodeSetWalletChip({ walletAddress }) {
 const oneEth = ethers.utils.parseEther("1");
 function NodeSetMiniPoolsColumn() {
   let [isShowingAll, setShowingAll] = useState(false);
+  let gasPrice = useGasPrice();
   let rplEthPrice = useRplEthPrice(ethers.utils.parseEther(".004")); // default until loaded
   const { data: superNodeDetails } = useNodeDetails({
     nodeAddress: contracts.SuperNodeAccount.address,
@@ -760,6 +762,7 @@ function NodeSetMiniPoolsColumn() {
               <Stack
                 sx={{
                   mt: 0.5,
+                  pr: 1,
                   borderRadius: "20px",
                   ...(moreMinipoolCount < 1 || isLoading
                     ? {}
@@ -776,8 +779,26 @@ function NodeSetMiniPoolsColumn() {
                   size="small"
                   label={isLoading ? "…" : Math.max(0, moreMinipoolCount)}
                 />
-                <Typography variant={"caption"} color={"text.secondary"}>
+                <Typography
+                  sx={{ flex: 1 }}
+                  variant={"caption"}
+                  color={"text.secondary"}
+                >
                   more from available deposits
+                </Typography>
+                <Typography variant="caption" color="text.disabled">
+                  gas @
+                  <Typography
+                    sx={{ pl: 1, pr: 0.5 }}
+                    variant="inherit"
+                    component="span"
+                    color="text.primary"
+                  >
+                    {trimValue(ethers.utils.formatUnits(gasPrice, "gwei"), {
+                      maxDecimals: 0,
+                    })}
+                  </Typography>
+                  gwei
                 </Typography>
               </Stack>
               <Grid container sx={{ pt: 1 }}>
