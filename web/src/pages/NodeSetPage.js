@@ -534,14 +534,12 @@ function NodeSetMiniPoolsColumn() {
   let { data: xREthBalance } = useBalance({
     address: contracts.OperatorDistributor.address,
   });
-  let { data: rEthBalance } = useBalance({
-    address: contracts.RocketVault.address,
-  });
+  let { data: rEthBalance } = useK.RocketDepositPool.Read.getBalance();
   let moreMinipoolCountByXREth = xREthBalance?.value
     .div(ethers.utils.parseEther("8"))
     .toNumber();
-  let moreMinipoolCountByREth = rEthBalance?.value
-    .div(ethers.utils.parseEther("24"))
+  let moreMinipoolCountByREth = rEthBalance
+    ?.div(ethers.utils.parseEther("24"))
     .toNumber();
   let moreMinipoolCountByRpl = maxMinipoolCountByRpl - activeMinipools.length;
   let rplPerMinipool = ethers.utils

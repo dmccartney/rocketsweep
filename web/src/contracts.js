@@ -1,4 +1,5 @@
 import OperatorDistributor from "./generated/contracts/OperatorDistributor.json";
+import RocketDepositPool from "./generated/contracts/RocketDepositPool.json";
 import RocketMerkleDistributorMainnet from "./generated/contracts/RocketMerkleDistributorMainnet.json";
 import RocketMinipoolBase from "./generated/contracts/RocketMinipoolBase.json";
 import RocketMinipoolDelegate from "./generated/contracts/RocketMinipoolDelegate.json";
@@ -22,6 +23,10 @@ const contracts = {
   OperatorDistributor: {
     address: "0x102809fE582ecaa527bB316DCc4E99fc35FBAbb9",
     abi: OperatorDistributor.abi,
+  },
+  RocketDepositPool: {
+    address: "0xDD3f50F8A6CafbE9b31a427582963f465E745AF8",
+    abi: RocketDepositPool.abi,
   },
   RocketMerkleDistributorMainnet: {
     address: [
