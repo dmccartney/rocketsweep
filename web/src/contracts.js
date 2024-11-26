@@ -43,6 +43,7 @@ const contracts = {
   },
   RocketMinipoolManager: {
     address: [
+      "0xF82991Bd8976c243eB3b7CDDc52AB0Fc8dc1246C",
       "0x09fbCE43e4021a3F69C4599FF00362b83edA501E",
       "0x6d010C43d4e96D74C422f2e27370AF48711B49bF",
       "0x84d11b65e026f7aa08f5497dd3593fb083410b71",
