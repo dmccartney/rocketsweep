@@ -9,6 +9,7 @@ import {
   IconButton,
   Stack,
   Tooltip,
+  Typography,
 } from "@mui/material";
 import { OpenInNew } from "@mui/icons-material";
 import { ethers } from "ethers";
@@ -21,6 +22,7 @@ import {
 import useMinipoolDetails from "../hooks/useMinipoolDetails";
 import {
   BNSortComparator,
+  delegateUpgradeInterface,
   distributeBalanceInterface,
   etherscanUrl,
   MinipoolStatusNameByValue,
@@ -80,13 +82,19 @@ const MINIPOOL_COLS = [
       if (!hasBalance || row.status !== MinipoolStatus.staking) {
         return "";
       }
-      return (
+      return row.upgraded ? (
         <DistributeButton
           nodeAddress={row.nodeAddress}
           minipoolAddress={row.minipoolAddress}
           upgraded={row.upgraded}
           balance={balance}
           nodeBalance={ethers.BigNumber.from(row.nodeBalance || "0")}
+        />
+      ) : (
+        <UpgradeButton
+          nodeAddress={row.nodeAddress}
+          minipoolAddress={row.minipoolAddress}
+          upgraded={row.upgraded}
         />
       );
     },
@@ -257,6 +265,80 @@ function DistributeButton({
           })}
         >
           {hasTooHighBalance ? "Finalize" : "Distribute"}
+        </Button>
+      </Box>
+    </Tooltip>
+  );
+}
+
+function UpgradeButton({ nodeAddress, minipoolAddress, upgraded }) {
+  let canWithdraw = useCanConnectedAccountWithdraw(nodeAddress);
+  let disabled = upgraded || !canWithdraw;
+  const prep = usePrepareContractWrite({
+    address: minipoolAddress,
+    abi: delegateUpgradeInterface,
+    functionName: "delegateUpgrade",
+    args: [],
+    enabled: !disabled,
+  });
+  let [estimateGasAmount, setEstimateGasAmount] = useState(
+    ethers.BigNumber.from(104000)
+  );
+  let provider = useWebSocketProvider();
+  let mp = useContract({
+    address: minipoolAddress,
+    abi: delegateUpgradeInterface,
+    signerOrProvider: provider,
+  });
+  useEffect(() => {
+    if (!mp) {
+      return;
+    }
+    let cancelled = false;
+    mp.estimateGas
+      .delegateUpgrade()
+      .then((estimate) => !cancelled && setEstimateGasAmount(estimate))
+      // .catch((err) => !cancelled && console.log("error estimating gas", err));
+      .catch((ignore) => {});
+    return () => (cancelled = true);
+  }, [mp]);
+
+  let performUpgrade = useContractWrite({
+    ...prep.config,
+  });
+  const gasAmount = prep.data?.request?.gasLimit || estimateGasAmount;
+  return (
+    <Tooltip
+      arrow
+      title={
+        <Stack
+          direction="column"
+          spacing={1}
+          alignItems="center"
+          sx={{ p: 1, width: 250 }}
+        >
+          <Typography color="text.secondary" variant="caption">
+            Distributing rewards requires upgrading the minipool delegate first.
+          </Typography>
+          <GasInfoFooter gasAmount={gasAmount} />
+        </Stack>
+      }
+    >
+      <Box sx={{ cursor: !disabled ? "inherit" : "not-allowed" }}>
+        <Button
+          onClick={() => performUpgrade.writeAsync()}
+          size="small"
+          variant="outlined"
+          color="primary"
+          disabled={disabled}
+          sx={(theme) => ({
+            "&.Mui-disabled": {
+              borderColor: theme.palette.gray.main,
+              color: theme.palette.gray.main,
+            },
+          })}
+        >
+          Upgrade
         </Button>
       </Box>
     </Tooltip>
