@@ -135,7 +135,7 @@ const INTERVAL_COLS = [
         sx={{ cursor: "help" }}
         title={
           type === "ongoing"
-            ? "This estimates the node’s share of RPL inflation for the interval. It will fluctuate until the end of the interval. At the end of the interval, if the node’s RPL stake is below 10% of borrowed ETH, then they receive no inflation RPL and this value becomes zero."
+            ? "This estimates the node’s share of RPL inflation for the interval. It will fluctuate until the end of the interval."
             : "This is the node’s share of RPL inflation for the interval."
         }
       >
